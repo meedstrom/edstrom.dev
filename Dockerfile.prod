@@ -1,0 +1,19 @@
+FROM node:14-alpine
+WORKDIR /app
+ENV PATH /app/node_modules/.bin:$PATH
+# ENV DEBIAN_FRONTEND noninteractive
+
+# install app dependencies
+COPY package.json ./
+COPY package-lock.json ./
+
+RUN apk --no-cache -U upgrade
+RUN npm install --production --silent
+RUN npm install react-scripts@3.4.3 -g --silent
+RUN npm audit fix --silent
+
+# add app
+COPY . ./
+
+# start app
+CMD ["npm", "start"]
