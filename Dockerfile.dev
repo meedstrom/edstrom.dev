@@ -1,15 +1,15 @@
-# Flow doesn't work on Alpine (https://github.com/facebook/flow/issues/7509),
-# so use Debian.
-
-FROM node:14.8.0-buster-slim
+FROM node:19-alpine
 WORKDIR /app
 
+# Fix Flow on Alpine: https://github.com/facebook/flow/issues/7509
+# CMD apk add gcompat
+
 # So you can run `flow` instead of `./node_modules/.bin/flow`
-ENV PATH /app/node_modules/.bin:$PATH
+# ENV PATH /app/node_modules/.bin:$PATH
 
 COPY package.json ./
 COPY package-lock.json ./
-RUN npm install --silent
+RUN npm install
 
-# NOTE: As specified in package.json, npm start calls react-scripts start.
+# NOTE: As specified in package.json, `npm start` calls `react-scripts start`.
 CMD ["npm", "start"]
