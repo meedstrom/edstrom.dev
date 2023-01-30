@@ -1,8 +1,7 @@
 import './App.css'
 import React, { Suspense
                 , useState
-                , useEffect
-                , useRef } from 'react'
+                , useEffect } from 'react'
 import { BrowserRouter
          , Routes
          , Route
@@ -46,18 +45,9 @@ function RootPage({ posts }) {
   )
 }
 
-// a custom hook
-function useFirstRender() {
-  const ref = useRef(true)
-  const firstRender = ref.current
-  ref.current = false
-  return firstRender
-}
-
 function App() {
   const [posts, setPosts] = useState([])
   const runOnceHack = true // this never changes
-  const firstRender = useFirstRender()
 
   // NOTE: Because setPosts() affects state, doing it here causes an infinite
   // render loop, thus runOnceHack.
@@ -69,9 +59,6 @@ function App() {
       .then(x => setPosts(x))
   }, [runOnceHack])
 
-  // Because the below JSX can't render on an empty state, just return no JSX on
-  // the first render.
-  if (!firstRender)  
   return (
       <div className="main-container">
         <Suspense fallback={<p>Attempting to load. If it takes long, it prolly broke.</p>} >
