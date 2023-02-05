@@ -1,7 +1,8 @@
 import './App.css'
 import React, { Suspense
-                , useState
-                 } from 'react'
+              , useState
+              , useEffect
+              } from 'react'
 import { BrowserRouter
          , Routes
          , Route
@@ -9,7 +10,31 @@ import { BrowserRouter
          , useParams } from 'react-router-dom'
 import useCookie from 'react-use-cookie'
 import { Markup } from 'interweave'
+import { readMessage, decrypt } from 'openpgp/lightweight'
 // import useTable from 'react-table'
+
+// was encrypted with:
+// for file in **; do gpg -ac --pinentry-mode loopback --no-symkey-cache --passphrase-file ../../passphrase $file ; done
+
+async function decryptPosts ( posts ) {
+  const rxForTitle = /<h1>(.*?)<\/h1>/
+  const rxForDate = /<p>Planted [(.*?)]/
+  posts.map(async (post) => {
+    const blob = await readMessage({
+      binaryMessage: post.crypted
+    })
+    const { data: decryptedContent } = await decrypt({
+      message: blob
+      // TODO: get the passphrase from user
+    , passwords: ['xoa2ziegh3ooYuichiepuoh4ohveey']
+    , format: 'binary'
+    })
+    post.content = decryptedContent
+    post.title = decryptedContent.match(rxForTitle)[0]
+    post.date = decryptedContent.match(rxForDate)[0]
+  })
+  return posts
+}
 
 function BlogPost({ posts }) {
   const slug = useParams()["*"]
@@ -32,18 +57,21 @@ function fontFromLength(charCount) {
 }
 
 function RootPage({ posts }) {
+
+  // const data = React.useMemo[posts]
   // const columns = React.useMemo(
   //   () => [
   //     {
-  //       Header: 'Title'
+  //       Header: 'Title',
   //       accessor: 'title'
   //     },
   //     {
-  //       Header: 'Date'
+  //       Header: 'Date',
   //       accessor: 'date'
   //     },
   //   ]
   // )
+
   // const tableInstance = useTable({columns, posts})
   //  const {
    // getTableProps,
@@ -54,8 +82,9 @@ function RootPage({ posts }) {
   // } = tableInstance
   return (
     <div>
-      <h1>Martin's notes</h1>
+      <h1>All notes</h1>
       <table>
+        <tbody>
         {posts.map(post => {
           const fontSize = fontFromLength(post.content.length)
           let urlText = post.title
@@ -70,14 +99,10 @@ function RootPage({ posts }) {
               <td>{post.date}</td>
             </tr>
           )})}
+        </tbody>
       </table>
     </div>
   )
-}
-
-
-function Dashboard () {
-  return <h2>Dashboard</h2>
 }
 
 async function loginUser(creds) {
@@ -125,15 +150,18 @@ function Login ({ setAuthToken }) {
 function App() {
   const [posts, setPosts] = useState([])
   const [authToken, setAuthToken] = useCookie('token')
+  const runOnceHack = true // this never changes
 
-  if (posts.length === 0) {
-    fetch('http://localhost:4040/allposts', {
-      headers: { Accept: 'application/json' }
-    }).then(x => x.json())
-      .then(x => Object.values(x))
-    // .then(x => React.useMemo(() => [x]))  // for react-table
-      .then(x => setPosts(x))
-  }
+  useEffect(() => {
+    if (posts.length === 0) {
+      fetch('http://localhost:4040/allposts', {
+        headers: { Accept: 'application/json' }
+      }).then(x => x.json())
+        .then(x => Object.values(x))
+        .then(x => decryptPosts(x))
+        .then(x => setPosts(x))
+    }}, [runOnceHack])
+  // React.useMemo(() => [x]))  // for react-table
 
   if (!authToken) {
     return <Login setAuthToken={setAuthToken} />
@@ -146,7 +174,6 @@ function App() {
           <Route path="/" element={<RootPage posts={posts} />} />
           <Route path="/posts/*" element={<BlogPost posts={posts} />} />
           <Route path="/login" />
-          <Route path="/dashboard" element={<Dashboard />} />
         </Routes>
         </BrowserRouter>
         </Suspense>
