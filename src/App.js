@@ -13,27 +13,23 @@ import { Markup } from 'interweave'
 import { readMessage, decrypt } from 'openpgp/lightweight'
 // import useTable from 'react-table'
 
-// was encrypted with:
-// for file in **; do gpg -ac --pinentry-mode loopback --no-symkey-cache --passphrase-file ../../passphrase $file ; done
-
-async function decryptPosts ( posts ) {
-  const rxForTitle = /<h1>(.*?)<\/h1>/
-  const rxForDate = /<p>Planted [(.*?)]/
-  posts.map(async (post) => {
-    const blob = await readMessage({
-      binaryMessage: post.crypted
-    })
-    const { data: decryptedContent } = await decrypt({
-      message: blob
-      // TODO: get the passphrase from user
+async function decryptPosts ( buffer, password ) {
+  const byteBlob = new Uint8Array(buffer)
+  const pgpBlob = await readMessage({
+    binaryMessage: byteBlob
+  })
+  console.log('password: ' + password) // check that it's still there
+  const { data: decryptedData } = await decrypt({
+    message: pgpBlob
+    // TODO: get the passphrase from user
+    // and then enter it here like
+    // , passwords: [password]
     , passwords: ['xoa2ziegh3ooYuichiepuoh4ohveey']
     , format: 'binary'
-    })
-    post.content = decryptedContent
-    post.title = decryptedContent.match(rxForTitle)[0]
-    post.date = decryptedContent.match(rxForDate)[0]
   })
-  return posts
+
+  var string = new TextDecoder().decode(decryptedData)
+  return JSON.parse(string)
 }
 
 function BlogPost({ posts }) {
@@ -56,30 +52,7 @@ function fontFromLength(charCount) {
   return size
 }
 
-function RootPage({ posts }) {
-
-  // const data = React.useMemo[posts]
-  // const columns = React.useMemo(
-  //   () => [
-  //     {
-  //       Header: 'Title',
-  //       accessor: 'title'
-  //     },
-  //     {
-  //       Header: 'Date',
-  //       accessor: 'date'
-  //     },
-  //   ]
-  // )
-
-  // const tableInstance = useTable({columns, posts})
-  //  const {
-   // getTableProps,
-   // getTableBodyProps,
-   // headerGroups,
-   // rows,
-   // prepareRow,
-  // } = tableInstance
+function RootPage({posts}) {
   return (
     <div>
       <h1>All notes</h1>
@@ -90,7 +63,7 @@ function RootPage({ posts }) {
           let urlText = post.title
           if (post.title === '') urlText = post.slug
           return (
-            <tr key={post.id}>
+            <tr key={post.slug}>
               <td>
                 <Link to={'/posts/' + post.slug} style={{fontSize: fontSize + 'pt'}}>
                   {urlText}
@@ -113,13 +86,11 @@ async function loginUser(creds) {
   }).then(data => data.json())
 }
 
-function Login ({ setAuthToken }) {
-  const [username, setUsername] = useState()
-  const [password, setPassword] = useState()
-
-  const handleSubmit = async x => {
+function Login ({ setAuthToken, password, setPassword }) {
+  // const username = 'guest'
+  const handleSubmit = async (x) => {
     x.preventDefault()
-    const token = await loginUser({ username, password })
+    const token = await loginUser({ username: 'guest', password })
     setAuthToken(token, {
         days: 7
       , sameSite: 'Strict'
@@ -133,7 +104,7 @@ function Login ({ setAuthToken }) {
       <form onSubmit={handleSubmit}>
       <label>
         <p>Username</p>
-        <input type="text" onChange={x => setUsername(x.target.value)} />
+        <input type="text" value="guest" readOnly />
       </label>
       <label>
         <p>Passphrase</p>
@@ -149,36 +120,46 @@ function Login ({ setAuthToken }) {
 
 function App() {
   const [posts, setPosts] = useState([])
+  const [password, setPassword] = useState()
   const [authToken, setAuthToken] = useCookie('token')
   const runOnceHack = true // this never changes
 
+  // TODO: persist the value of 'posts' in sessionStorage
+  // so like, don't fetch if it already exists here
+  const sessionPosts = window.sessionStorage.getItem("posts")
   useEffect(() => {
     if (posts.length === 0) {
-      fetch('http://localhost:4040/allposts', {
-        headers: { Accept: 'application/json' }
-      }).then(x => x.json())
-        .then(x => Object.values(x))
-        .then(x => decryptPosts(x))
-        .then(x => setPosts(x))
+      if (sessionPosts) {
+        setPosts(sessionPosts)
+      }
+      else {
+        fetch('http://localhost:4040/allposts', {
+          headers: { Accept: 'application/octet-stream' }
+        }).then(x => x.arrayBuffer())
+          .then(x => decryptPosts(x, password))
+          .then(x => Object.values(x))
+          .then(x => setPosts(x))
+      }
     }}, [runOnceHack])
   // React.useMemo(() => [x]))  // for react-table
 
   if (!authToken) {
-    return <Login setAuthToken={setAuthToken} />
+    return <Login setAuthToken={setAuthToken} setPassword={setPassword} password={password} />
   }
+  if (posts.length > 0) {
   return (
       <div className="main-container">
-        <Suspense fallback={<p>Attempting to load. If it takes long, it prolly broke.</p>} >
+        <Suspense fallback={<p>Attempting to load BrowserRouter. If it takes long, it prolly broke.</p>} >
         <BrowserRouter>
         <Routes>
           <Route path="/" element={<RootPage posts={posts} />} />
           <Route path="/posts/*" element={<BlogPost posts={posts} />} />
-          <Route path="/login" />
         </Routes>
         </BrowserRouter>
         </Suspense>
       </div>
   )
+  }
 }
 
 export default App
