@@ -1,6 +1,19 @@
+.main-container {
+  margin: 4%;
+}
 .App {
   text-align: center;
 }
+
+h2 ~ *:not(h2) {
+  margin-left: 2em;
+}
+
+
+h3 ~ *:not(h3):not(ul):not(li) {
+  margin-left: 2em;
+}
+
 
 .App-logo {
   height: 40vmin;

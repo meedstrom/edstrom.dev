@@ -5,35 +5,27 @@ import React, { Suspense
               , useEffect
               , memo
               } from 'react'
-import { BrowserRouter
-       , Routes
-       , Route
+import { Route
        , Link
        , useParams
+       , createBrowserRouter
+       , createRoutesFromElements
+       , RouterProvider
        } from 'react-router-dom'
 import { Markup } from 'interweave'
-import { readMessage, decrypt } from 'openpgp/lightweight'
-
-async function decryptPosts ( buffer, password ) {
-  const byteBlob = new Uint8Array(buffer)
-  const pgpBlob = await readMessage({
-    binaryMessage: byteBlob
-  })
-  const { data: decryptedData } = await decrypt({
-    message: pgpBlob
-  , passwords: [password]
-  , format: 'binary'
-  })
-  const string = new TextDecoder().decode(decryptedData)
-  return JSON.parse(string)
-}
+import Login from './Login'
 
 function BlogPost({ posts }) {
   const slug = useParams()["*"]
   const post = posts.find(x => x.slug === slug)
   if (typeof post === 'undefined')
     console.log(`Slug '${slug}' did not match any post`)
-  else return <Markup content={post.content} />
+  else return (
+    <div>
+      <Link to='/'>Back to All notes</Link>
+      <Markup content={post.content} />
+    </div>
+  )
 }
 
 function fontFromLength(charCount) {
@@ -50,7 +42,7 @@ const RootPage = memo(function RootPage({posts}) {
       <table>
         <tbody>
           {posts.map(post => {
-            // TODO: use post.wordcount
+            // TODO: use post.wordcount when i compile new version of blob
             const fontSize = fontFromLength(post.content.length)
             const linkText = (post.title === '') ? post.slug : post.title
             return (
@@ -62,44 +54,13 @@ const RootPage = memo(function RootPage({posts}) {
                 </td>
                 <td>{post.date}</td>
               </tr>
-            )})}
+            )
+          })}
         </tbody>
       </table>
     </div>
   )
 })
-
-function Login ({ blob, setPosts }) {
-  const [password, setPassword] = useState('')
-  const handleSubmit = (x) => {
-    x.preventDefault()
-    if (!blob) console.log('Not yet fetched posts from server')
-    else decryptPosts(blob, password)
-      .then(x => Object.values(x))
-      .then(x => {
-        setPosts(x)
-        window.localStorage.setItem("posts", JSON.stringify(x))
-      })
-  }
-  return (
-    <div className="login-wrapper">
-      <h1> Please log in </h1>
-      <form onSubmit={handleSubmit}>
-      <label>
-        <p>Username</p>
-        <input type="text" value="guest" readOnly />
-      </label>
-      <label>
-        <p>Passphrase</p>
-        <input type="password" onChange={x => setPassword(x.target.value)} />
-      </label>
-      <div>
-        <button type="submit">Log in</button>
-      </div>
-    </form>
-    </div>
-  )
-}
 
 function App() {
   const storedPosts = window.localStorage.getItem('posts')
@@ -108,7 +69,8 @@ function App() {
   )
   const [blob, setBlob] = useState([])
 
-  // State must be set inside an effect hook to prevent infinite render loop
+  // (Since setBlob affects state, it must be called inside an effect hook to
+  // prevent an infinite render loop)
   useEffect(() => {
     if (posts.length === 0) {
       fetch('http://localhost:4040/allposts', {
@@ -119,17 +81,21 @@ function App() {
 
   if (posts.length === 0)
     return <Login blob={blob} setPosts={setPosts} />
+  
+  const myRouter = createBrowserRouter(
+    createRoutesFromElements(
+      <>
+        <Route path="/" element={<RootPage posts={posts} />} />
+        <Route path="/posts/*" element={<BlogPost posts={posts} />} />
+      </>
+    )
+  )
 
   if (posts.length > 0)
     return (
       <div className="main-container">
         <Suspense fallback={<p>Attempting to load BrowserRouter. If it takes long, it prolly broke.</p>} >
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<RootPage posts={posts} />} />
-              <Route path="/posts/*" element={<BlogPost posts={posts} />} />
-            </Routes>
-          </BrowserRouter>
+          <RouterProvider router={myRouter} />
         </Suspense>
       </div>
     )
