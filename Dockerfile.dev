@@ -12,4 +12,5 @@ COPY package-lock.json ./
 RUN npm install
 
 # NOTE: As specified in package.json, `npm start` calls `react-scripts start`.
+CMD ["npm", "build"]
 CMD ["npm", "start"]

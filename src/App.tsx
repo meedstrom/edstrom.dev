@@ -15,11 +15,22 @@ import { Route
 import { Markup } from 'interweave'
 import Login from './Login'
 
-function BlogPost({ posts }) {
+interface Post {
+   title: string
+  ,slug: string
+  ,content: string
+  ,date: string
+  ,wordcount: number
+  ,tags: string[]
+}
+
+function BlogPost({ posts }: { posts: Post[] }) {
   const slug = useParams()["*"]
-  const post = posts.find(x => x.slug === slug)
-  if (typeof post === 'undefined')
+  const post = posts.find((x: Post) => x.slug === slug)
+  if (typeof post === 'undefined') {
     console.log(`Slug '${slug}' did not match any post`)
+    return null
+  }
   else return (
     <div>
       <Link to='/'>Back to All notes</Link>
@@ -28,14 +39,14 @@ function BlogPost({ posts }) {
   )
 }
 
-function fontFromLength(charCount) {
-  let frac = Math.log(charCount) / Math.log(500000)
+function fontFromLength(charCount: number) {
+  let frac = Math.log(charCount) / Math.log(50000)
   let size = 2 + frac * 20
   if (size < 7) size = 7
   return size
 }
 
-const RootPage = memo(function RootPage({posts}) {
+const RootPage = memo(function RootPage({ posts }: { posts: Post[] }) {
   return (
     <div>
       <h1>All notes</h1>
@@ -43,8 +54,9 @@ const RootPage = memo(function RootPage({posts}) {
         <tbody>
           {posts.map(post => {
             // TODO: use post.wordcount when i compile new version of blob
-            const fontSize = fontFromLength(post.content.length)
+            const fontSize = fontFromLength(post.wordcount)
             const linkText = (post.title === '') ? post.slug : post.title
+            const tags = post.tags.join(",")
             return (
               <tr key={post.slug}>
                 <td>
@@ -52,6 +64,7 @@ const RootPage = memo(function RootPage({posts}) {
                     {linkText}
                   </Link>
                 </td>
+                <td>{tags}</td>
                 <td>{post.date}</td>
               </tr>
             )
@@ -64,10 +77,10 @@ const RootPage = memo(function RootPage({posts}) {
 
 function App() {
   const storedPosts = window.localStorage.getItem('posts')
+  const [blob, setBlob] = useState(new ArrayBuffer(0))
   const [posts, setPosts] = useState(
     (!storedPosts || storedPosts === 'undefined') ? [] : JSON.parse(storedPosts)
   )
-  const [blob, setBlob] = useState([])
 
   // (Since setBlob affects state, it must be called inside an effect hook to
   // prevent an infinite render loop)
@@ -75,13 +88,13 @@ function App() {
     if (posts.length === 0) {
       fetch('http://localhost:4040/allposts', {
         headers: { Accept: 'application/octet-stream' }
-      }).then(x => x.arrayBuffer())
-        .then(x => setBlob(x))
+      }).then((x: Response) => x.arrayBuffer())
+        .then((x: any) => setBlob(x))
     }}, [posts.length])
 
-  if (posts.length === 0)
+  if (posts.length <= 0)
     return <Login blob={blob} setPosts={setPosts} />
-  
+
   const myRouter = createBrowserRouter(
     createRoutesFromElements(
       <>
@@ -91,6 +104,8 @@ function App() {
     )
   )
 
+  // TODO: Move the router to document root at index.tsx.
+  // Simply, keep this App component and let it dispatch between a RootPage or a Login.
   if (posts.length > 0)
     return (
       <div className="main-container">
@@ -99,6 +114,8 @@ function App() {
         </Suspense>
       </div>
     )
+
+  return <></>
 }
 
 export default App
