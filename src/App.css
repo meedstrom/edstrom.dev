@@ -4,6 +4,14 @@ body {
   background: #ded;
 }
 
+blockquote {
+  background: #ddd;
+  /* padding-left: 1em; */
+  /* padding-right: 1em; */
+  padding: 0.5em 1em 0.5em 1em;
+  
+}
+
 h2 ~ *:not(h2) {
   margin-left: 2em;
 }

@@ -5,13 +5,14 @@ import React, { Suspense
               , useEffect
               , memo
               } from 'react'
-import { Route
-       , Link
+import {
+         Link
+       , Outlet
        , Navigate
+       , useNavigate
        , useParams
-       , createBrowserRouter
-       , createRoutesFromElements
-       , RouterProvider
+       , useLocation
+       , useOutletContext
        } from 'react-router-dom'
 import { Markup } from 'interweave'
 import useCookie from 'react-use-cookie'
@@ -29,8 +30,11 @@ interface Post {
   ,tags: string[]
 }
 
-function BlogPost({ posts }: { posts: Post[] }) {
+function BlogPost() {
   const slug = useParams()["*"]
+  const [posts, setPosts,
+         bytes, setBytes,
+         cryptoKey, setCryptoKey]: any[] = useOutletContext()
   const post = posts.find((x: Post) => x.slug === slug)
   if (typeof post === 'undefined') {
     console.log(`Slug '${slug}' did not match any post`)
@@ -54,13 +58,16 @@ function fontFromLength(charCount: number) {
   return size
 }
 
-const BigList = memo(function BigList({ posts }: { posts: Post[] }) {
+const BigList = memo(function BigList() {
+  const [posts, setPosts,
+         bytes, setBytes,
+         cryptoKey, setCryptoKey]: any[] = useOutletContext()
   return (
     <div>
       <h1>All notes</h1>
       <table>
         <tbody>
-          {posts.map(post => {
+          {posts.map((post: Post) => {
             const fontSize = fontFromLength(post.wordcount)
             const linkText = (post.title === '') ? post.slug : post.title
             const tags = post.tags.join(",")
@@ -82,7 +89,21 @@ const BigList = memo(function BigList({ posts }: { posts: Post[] }) {
   )
 })
 
+// use like <SplitPane left={<Contacts /> } right={<Chat /> } />
+// function SplitPane(props: Object) {
+//  return (
+//    <div className="SplitPane">
+//      <div className="SplitPane-left">
+//        {props.left}      </div>
+//      <div className="SplitPane-right">
+//        {props.right}      </div>
+//    </div>
+//  )
+//}
+
 function App() {
+  const location = useLocation()
+  const navigate = useNavigate()
   const storedPosts = window.sessionStorage.getItem('posts')
   const storedBytes = window.localStorage.getItem('bytes')
   const [cryptoKey, setCryptoKey] = useCookie('token')
@@ -108,35 +129,28 @@ function App() {
       }
       // if key cookie already exists, use that to decrypt instead of
       // directing user to the login page
-      if (cryptoKey !== null && cryptoKey !== 'undefined' && bytes.byteLength > 0) {
+      else if (cryptoKey !== '') {
+        console.log('key: ' + cryptoKey)
         myDecrypt(bytes, cryptoKey)
-          .then((x: any) => Object.values(x))
-          .then((x: Object) => {
-            setPosts(x)
-            window.sessionStorage.setItem('posts', JSON.stringify(x))
-          })
+               .then((x: Object) => {
+                 console.log('I am here')
+                 setPosts(x)
+                 window.sessionStorage.setItem('posts', JSON.stringify(x))
+               })
+               .then(() => {
+                 navigate('/all')
+               })
       }
-  }}, [posts, bytes, cryptoKey])
+  }}, [bytes, cryptoKey])
 
-  // TODO: Find out how to allow the back button to not trigger the warning
-  // ""You are trying to use a blocker on a POP navigation to a location that was
-  // not created by @remix-run/router.""
-
-  // Maybe if I move the router to absolute root level in index.tsx and DON'T
-  // pass any props?  Because I can't lift state that far.
-  // I would go about it like .. either putting the necessary props in Context or ..
-  // the useEffect stuff could sit in the index.tsx as outside-of-React stuff.
-  const myRouter = createBrowserRouter(
-    createRoutesFromElements(
-      <>
-        <Route path="/" element={<Navigate replace to={posts.length === 0 ? '/login' : '/all'} />} />
-        <Route path="/posts/*" element={<BlogPost posts={posts} />} />
-        <Route path="/login" element={<Login bytes={bytes} setPosts={setPosts} cryptoKey={cryptoKey} setCryptoKey={setCryptoKey} />} />
-        <Route path="/all" element={<BigList posts={posts} />} />
-      </>
-    )
-  )
-  return <RouterProvider router={myRouter} />
+  console.log(location.pathname)
+  if (location.pathname === '/') {
+    return <Navigate to={(posts.length === 0) ? '/login' : '/all'} />
+  } else {
+    return <Outlet context={[posts, setPosts,
+                             bytes, setBytes,
+                             cryptoKey, setCryptoKey]} />
+  }
 }
 
-export default App
+export { BlogPost, BigList, App }
