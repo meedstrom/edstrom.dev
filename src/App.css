@@ -1,12 +1,7 @@
 
-
-.main-container {
+body {
   padding: 4%;
   background: #ded;
-}
-
-.App {
-  text-align: center;
 }
 
 h2 ~ *:not(h2) {

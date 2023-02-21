@@ -7,13 +7,18 @@ import React, { Suspense
               } from 'react'
 import { Route
        , Link
+       , Navigate
        , useParams
        , createBrowserRouter
        , createRoutesFromElements
        , RouterProvider
        } from 'react-router-dom'
 import { Markup } from 'interweave'
-import Login from './Login'
+import useCookie from 'react-use-cookie'
+import Login, { myDecrypt } from './Login'
+
+const enc = new TextEncoder()
+const dec = new TextDecoder()
 
 interface Post {
    title: string
@@ -31,11 +36,14 @@ function BlogPost({ posts }: { posts: Post[] }) {
     console.log(`Slug '${slug}' did not match any post`)
     return null
   }
+  // TODO: use a nice spinner?
   else return (
-    <div>
-      <Link to='/'>Back to All notes</Link>
-      <Markup content={post.content} />
-    </div>
+    <Suspense fallback={<p>Loading</p>}>
+      <div>
+        <Link to='/'>Back to All notes</Link>
+        <Markup content={post.content} />
+      </div>
+    </Suspense>
   )
 }
 
@@ -46,14 +54,13 @@ function fontFromLength(charCount: number) {
   return size
 }
 
-const RootPage = memo(function RootPage({ posts }: { posts: Post[] }) {
+const BigList = memo(function BigList({ posts }: { posts: Post[] }) {
   return (
     <div>
       <h1>All notes</h1>
       <table>
         <tbody>
           {posts.map(post => {
-            // TODO: use post.wordcount when i compile new version of blob
             const fontSize = fontFromLength(post.wordcount)
             const linkText = (post.title === '') ? post.slug : post.title
             const tags = post.tags.join(",")
@@ -76,46 +83,60 @@ const RootPage = memo(function RootPage({ posts }: { posts: Post[] }) {
 })
 
 function App() {
-  const storedPosts = window.localStorage.getItem('posts')
-  const [blob, setBlob] = useState(new ArrayBuffer(0))
+  const storedPosts = window.sessionStorage.getItem('posts')
+  const storedBytes = window.localStorage.getItem('bytes')
+  const [cryptoKey, setCryptoKey] = useCookie('token')
+  const [bytes, setBytes] = useState(
+    (!storedBytes || storedBytes === 'undefined') ? new ArrayBuffer(0) : enc.encode(storedBytes)
+  )
   const [posts, setPosts] = useState(
     (!storedPosts || storedPosts === 'undefined') ? [] : JSON.parse(storedPosts)
   )
 
-  // (Since setBlob affects state, it must be called inside an effect hook to
+  // (Since setBytes affects state, it must be called inside an effect hook to
   // prevent an infinite render loop)
   useEffect(() => {
     if (posts.length === 0) {
-      fetch('http://localhost:4040/allposts', {
-        headers: { Accept: 'application/octet-stream' }
-      }).then((x: Response) => x.arrayBuffer())
-        .then((x: any) => setBlob(x))
-    }}, [posts.length])
+      if (bytes.byteLength === 0) {
+        fetch('http://localhost:4040/allposts', {
+          headers: { Accept: 'application/octet-stream' }
+        }).then((x: Response) => x.arrayBuffer())
+          .then((x: any) => {
+            setBytes(x)
+            window.localStorage.setItem('bytes', dec.decode(x))
+          })
+      }
+      // if key cookie already exists, use that to decrypt instead of
+      // directing user to the login page
+      if (cryptoKey !== null && cryptoKey !== 'undefined' && bytes.byteLength > 0) {
+        myDecrypt(bytes, cryptoKey)
+          .then((x: any) => Object.values(x))
+          .then((x: Object) => {
+            setPosts(x)
+            window.sessionStorage.setItem('posts', JSON.stringify(x))
+          })
+      }
+  }}, [posts, bytes, cryptoKey])
 
-  if (posts.length <= 0)
-    return <Login blob={blob} setPosts={setPosts} />
+  // TODO: Find out how to allow the back button to not trigger the warning
+  // ""You are trying to use a blocker on a POP navigation to a location that was
+  // not created by @remix-run/router.""
 
+  // Maybe if I move the router to absolute root level in index.tsx and DON'T
+  // pass any props?  Because I can't lift state that far.
+  // I would go about it like .. either putting the necessary props in Context or ..
+  // the useEffect stuff could sit in the index.tsx as outside-of-React stuff.
   const myRouter = createBrowserRouter(
     createRoutesFromElements(
       <>
-        <Route path="/" element={<RootPage posts={posts} />} />
+        <Route path="/" element={<Navigate replace to={posts.length === 0 ? '/login' : '/all'} />} />
         <Route path="/posts/*" element={<BlogPost posts={posts} />} />
+        <Route path="/login" element={<Login bytes={bytes} setPosts={setPosts} cryptoKey={cryptoKey} setCryptoKey={setCryptoKey} />} />
+        <Route path="/all" element={<BigList posts={posts} />} />
       </>
     )
   )
-
-  // TODO: Move the router to document root at index.tsx.
-  // Simply, keep this App component and let it dispatch between a RootPage or a Login.
-  if (posts.length > 0)
-    return (
-      <div className="main-container">
-        <Suspense fallback={<p>Attempting to load BrowserRouter. If it takes long, it prolly broke.</p>} >
-          <RouterProvider router={myRouter} />
-        </Suspense>
-      </div>
-    )
-
-  return <></>
+  return <RouterProvider router={myRouter} />
 }
 
 export default App
