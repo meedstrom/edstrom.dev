@@ -12,10 +12,9 @@ blockquote {
   
 }
 
-h2 ~ *:not(h2) {
+h2 ~ *:not(h2):not(ul):not(li) {
   margin-left: 2em;
 }
-
 
 h3 ~ *:not(h3):not(ul):not(li) {
   margin-left: 2em;

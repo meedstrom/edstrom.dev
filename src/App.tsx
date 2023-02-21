@@ -14,7 +14,7 @@ import {
        , useLocation
        , useOutletContext
        } from 'react-router-dom'
-import { Markup } from 'interweave'
+import { Interweave, Node } from 'interweave'
 import useCookie from 'react-use-cookie'
 import Login, { myDecrypt } from './Login'
 
@@ -30,24 +30,39 @@ interface Post {
   ,tags: string[]
 }
 
+// It used to be that I rendered the Org-exported HTML with just <Markup />,
+// which meant the links were <a> tags.  Clicking them was like entering manual URLs:
+// makes an ugly transition effect involving a Flash Of Unstyled Content. Solution:
+// rewrite all the <a href=>... into <Link to=...>!
+function rewriteLinkTags (node: HTMLElement, children: Node[]): React.ReactNode {
+  if (node.tagName.toLowerCase() === "a") {
+    let href = node.getAttribute('href')
+    if (!href) return null // don't modify the element
+    else return <Link to={href}>{children}</Link>
+  }
+}
+
 function BlogPost() {
   const slug = useParams()["*"]
   const [posts, setPosts,
          bytes, setBytes,
          cryptoKey, setCryptoKey]: any[] = useOutletContext()
   const post = posts.find((x: Post) => x.slug === slug)
+  useEffect(() => {
+    document.title = post.title
+  })
+
   if (typeof post === 'undefined') {
     console.log(`Slug '${slug}' did not match any post`)
     return null
   }
-  // TODO: use a nice spinner?
+  // NOTE: For some reason backing up with {-1} creates three entries in history. Bug? Anyway just pushing onto the history stack is fine.
   else return (
-    <Suspense fallback={<p>Loading</p>}>
       <div>
-        <Link to='/'>Back to All notes</Link>
-        <Markup content={post.content} />
+        {/* <Link to={-1 as any}>Back to All notes</Link> */}
+        <Link to='/posts'>Back to All notes</Link>
+        <Interweave content={post.content} transform={rewriteLinkTags}/>
       </div>
-    </Suspense>
   )
 }
 
@@ -62,6 +77,9 @@ const BigList = memo(function BigList() {
   const [posts, setPosts,
          bytes, setBytes,
          cryptoKey, setCryptoKey]: any[] = useOutletContext()
+  useEffect(() => {
+    document.title = 'All posts'
+  })
   return (
     <div>
       <h1>All notes</h1>
@@ -114,6 +132,12 @@ function App() {
     (!storedPosts || storedPosts === 'undefined') ? [] : JSON.parse(storedPosts)
   )
 
+  // Expire old content
+  // const storageDate = Number(window.localStorage.getItem('storageDate'))
+  // if (storageDate === NaN || Date.now() > (storageDate + 86400000)) {
+  //   setBytes(new ArrayBuffer(0))
+  // }
+  
   // (Since setBytes affects state, it must be called inside an effect hook to
   // prevent an infinite render loop)
   useEffect(() => {
@@ -125,31 +149,32 @@ function App() {
           .then((x: any) => {
             setBytes(x)
             window.localStorage.setItem('bytes', dec.decode(x))
+            window.localStorage.setItem('storageDate', Date.now().toString())
           })
       }
       // if key cookie already exists, use that to decrypt instead of
       // directing user to the login page
       else if (cryptoKey !== '') {
-        console.log('key: ' + cryptoKey)
         myDecrypt(bytes, cryptoKey)
                .then((x: Object) => {
-                 console.log('I am here')
                  setPosts(x)
                  window.sessionStorage.setItem('posts', JSON.stringify(x))
-               })
-               .then(() => {
-                 navigate('/all')
+                 navigate('/posts')
                })
       }
   }}, [bytes, cryptoKey])
 
-  console.log(location.pathname)
+  // TODO: Apply the weird typescript adaptation in https://reactrouter.com/en/main/hooks/use-outlet-context
   if (location.pathname === '/') {
-    return <Navigate to={(posts.length === 0) ? '/login' : '/all'} />
+    return <Navigate to={(posts.length === 0) ? '/login' : '/posts'} />
   } else {
-    return <Outlet context={[posts, setPosts,
-                             bytes, setBytes,
-                             cryptoKey, setCryptoKey]} />
+    return (
+      <Suspense fallback={<p>Loading</p>}>
+        <Outlet context={[posts, setPosts,
+                          bytes, setBytes,
+                          cryptoKey, setCryptoKey]} />
+      </Suspense>
+    )
   }
 }
 
