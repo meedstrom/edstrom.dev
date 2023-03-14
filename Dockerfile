@@ -1,12 +1,12 @@
 FROM node:19-alpine
 WORKDIR /app
 
-RUN apk add nginx
 COPY package.json ./
 COPY package-lock.json ./
 
 # The VOLUME instruction does not support specifying a host-dir parameter. You must specify the mountpoint when you create or run the container.
 VOLUME /app
+VOLUME /app/node_modules
 
 RUN npm install
 
@@ -19,5 +19,5 @@ RUN npm install
 EXPOSE 3000
 
 # NOTE: As specified in package.json, `npm start` calls `react-scripts start`.
-# CMD ["npm", "build"]
+# RUN npm run build
 CMD ["npm", "start"]

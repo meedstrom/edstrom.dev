@@ -1,8 +1,20 @@
 
 body {
   padding: 4%;
-  background: #ded;
+  background: #edb;
+  color: #111;
+
+  @media (prefers-color-scheme: dark) {
+    background: #000;
+    color: #ccc;
+  }
 }
+
+/* Taken from default color in Firefox.  Colors bin Chromium ugly esp. on #edb background.  */
+a {
+  color: #0066cc;
+}
+
 
 blockquote {
   background: #ddd;
