@@ -19,7 +19,7 @@ const myRouter = createBrowserRouter(
         <Route path="posts/*" element={<BlogPost />} />
         <Route path="posts" element={<BigList />} />
         <Route path="login" element={<Login />} />
-        <Route path="now" loader={() => return redirect('/posts/top-of-mind')} />
+        <Route path="now" loader={() => {return redirect('/posts/top-of-mind')}} />
         {/* <Route path="news" element={<Changelog>} /> */}
       </Route>
     </>

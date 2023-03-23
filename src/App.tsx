@@ -1,14 +1,20 @@
 /* eslint semi: ["warn", "never"] */
 import './App.css'
-// import postsPath from './posts.json'
 import pako from 'pako'
 import React from 'react'
+import { useCookies } from 'react-cookie'
+import { Interweave, Node } from 'interweave'
+import { Buffer } from 'buffer'
+import { HashLink as Link } from 'react-router-hash-link'
+import postsJson from './posts.json'
+
 import {
-   Suspense
+  Suspense
   ,useState
   ,useEffect
   ,memo
 } from 'react'
+
 import {
    Outlet
   ,Navigate
@@ -17,11 +23,6 @@ import {
   ,useLocation
   ,useOutletContext
 } from 'react-router-dom'
-
-import { useCookies } from 'react-cookie'
-import { Interweave, Node } from 'interweave'
-import { Buffer } from 'buffer'
-import { HashLink as Link } from 'react-router-hash-link'
 
 const { subtle } = globalThis.crypto
 
@@ -219,24 +220,11 @@ export function App() {
   useEffect(() => {
     // Get the big JSON of all posts
     if (posts.length === 0) {
-      /* fetch(postsPath, { */
-      fetch(process.env.PUBLIC_URL + '/posts.json', {
-        headers: {
-          "Accept": 'application/json',
-          "Cache-Control": 'max-age=86400, private'
-        },
-        cache: "default"
+      const x: Post[] = postsJson.map((post: any) => {
+        post.nonce = new Uint8Array(Object.values(post.nonce))
+        return post
       })
-        .then((x: Response) => x.json())
-        // recover typed array
-        .then((x: any) => x.map((post: any) => {
-          post.nonce = new Uint8Array(Object.values(post.nonce))
-          return post
-        }))
-        .then((x: Post[]) => {
-          setPosts(x)
-        } )
-        .catch((error: Error) => console.log(error))
+      setPosts(x)
     }
     // Get postKey out of cookie, if there is one
     if (!postKey && cookies.storedPostKey) {
@@ -249,7 +237,7 @@ export function App() {
         ,true
         ,['encrypt', 'decrypt']
       ).then((x) => setPostKey(x))
-       .catch((error: Error) => console.log(error))
+            .catch((error: Error) => console.log(error))
     }
   })
 
