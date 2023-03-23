@@ -3,11 +3,13 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import './index.css'
 import { BlogPost, BigList, App } from './App'
+import { CookiesProvider } from 'react-cookie'
 import Login  from './Login'
 /* import reportWebVitals from './reportWebVitals' */
 import { Route
        , createBrowserRouter
        , createRoutesFromElements
+       , redirect
        , RouterProvider } from 'react-router-dom'
 
 const myRouter = createBrowserRouter(
@@ -17,17 +19,20 @@ const myRouter = createBrowserRouter(
         <Route path="posts/*" element={<BlogPost />} />
         <Route path="posts" element={<BigList />} />
         <Route path="login" element={<Login />} />
+        <Route path="now" loader={() => return redirect('/posts/top-of-mind')} />
+        {/* <Route path="news" element={<Changelog>} /> */}
       </Route>
     </>
   )
 )
 
-const root = ReactDOM.createRoot(
+ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
-)
-root.render(
+).render(
   <React.StrictMode>
-    <RouterProvider router={myRouter} />
+    <CookiesProvider>
+      <RouterProvider router={myRouter} />
+    </CookiesProvider>
   </React.StrictMode>
 )
 
