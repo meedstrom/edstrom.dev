@@ -2,7 +2,8 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import './index.css'
-import { BlogPost, BigList, App } from './App'
+import { BlogPost, App } from './App'
+import { Tablev8 } from './Tablev8'
 import { CookiesProvider } from 'react-cookie'
 import Login  from './Login'
 /* import reportWebVitals from './reportWebVitals' */
@@ -17,18 +18,20 @@ const myRouter = createBrowserRouter(
     <>
       <Route path="/" element={<App />} >
         <Route path="posts/*" element={<BlogPost />} />
-        <Route path="posts" element={<BigList />} />
+        <Route path="posts" element={<Tablev8 />} />
         <Route path="login" element={<Login />} />
-        <Route path="now" loader={() => {return redirect('/posts/top-of-mind')}} />
+        <Route path="now" loader={() => { return redirect('/posts/portal-what-excites-me-recently') }} />
+        <Route path="about" loader={() => { return redirect('/posts/about') }} />
         {/* <Route path="news" element={<Changelog>} /> */}
       </Route>
     </>
   )
 )
 
-ReactDOM.createRoot(
+const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
-).render(
+)
+root.render(
   <React.StrictMode>
     <CookiesProvider>
       <RouterProvider router={myRouter} />

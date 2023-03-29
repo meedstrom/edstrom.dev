@@ -1,40 +1,40 @@
 /* eslint semi: ["warn", "never"] */
 import './App.css'
 import pako from 'pako'
-import React from 'react'
 import { useCookies } from 'react-cookie'
+import React from 'react'
 import { Interweave, Node } from 'interweave'
 import { Buffer } from 'buffer'
 import { HashLink as Link } from 'react-router-hash-link'
-import postsJson from './posts.json'
+// import postsBin from './posts.bin'
 
 import {
-  Suspense
-  ,useState
-  ,useEffect
-  ,memo
+  Suspense,
+  useState,
+  useEffect,
 } from 'react'
 
 import {
-   Outlet
-  ,Navigate
-  ,ScrollRestoration
-  ,useParams
-  ,useLocation
-  ,useOutletContext
+  Outlet,
+  Navigate,
+  ScrollRestoration,
+  useParams,
+  useLocation,
+  useOutletContext,
 } from 'react-router-dom'
 
 const { subtle } = globalThis.crypto
 
-interface Post {
-   title: string
-  ,slug: string
-  ,content: string
-  ,wordcount: number
-  ,tags: string[]
-  ,nonce: Uint8Array
-  ,created: string
-  ,updated: string
+
+export type Post = {
+  title: string
+  slug: string
+  content: string
+  wordcount: number
+  tags: string[]
+  backlinks: number | null
+  created: string
+  updated: string
 }
 
 export const hardcodedWrappingKey = await subtle.importKey(
@@ -49,9 +49,10 @@ async function myDecrypt( ciphertext: Uint8Array
                         , iv: Uint8Array
                         // , additionalData: Uint8Array
                         , postKey: CryptoKey | null) {
-  console.log('post key: ')
+  // TODO: catch more detailed exceptions? with try/catch?
+  console.log(iv)
   console.log(postKey)
-  // TODO: catch more detailed exceptions?
+  console.log(ciphertext)
   if (postKey) {
     const decryptedBuffer = await subtle.decrypt(
       { name: 'AES-GCM', iv }
@@ -59,12 +60,10 @@ async function myDecrypt( ciphertext: Uint8Array
       , postKey
       , ciphertext
     )
-    console.log('decrypted buffer: ' + decryptedBuffer)
     // const decompressedBytes = await new Response(decryptedBuffer).body.pipeThrough(new DecompressionStream('gzip'))
     // return await new Response(decompressedBytes).text()
     const decompressed = pako.ungzip(decryptedBuffer)
     const text = Buffer.from(decompressed).toString()
-    console.log(text)
     return text
     /* return await new Response(decryptedBuffer).text() */
   }
@@ -81,10 +80,13 @@ async function myDecrypt( ciphertext: Uint8Array
 // a Flash Of Unstyled Content.
 // Solution: rewrite all the <a href=...> into <Link to=...>, so React
 // Router handles the links!
+// NOTE: destroys any other props in the <a> tag
 function rewriteLinkTags (node: HTMLElement, children: Node[]): React.ReactNode {
   if (node.tagName.toLowerCase() === "a") {
     const href = node.getAttribute('href')
-    if (href) return <Link to={href}>{children}</Link>
+    if (href) {
+      return <Link className={className} to={href}>{children}</Link>
+    }
   }
 }
 
@@ -94,94 +96,64 @@ function rewriteLinkTags (node: HTMLElement, children: Node[]): React.ReactNode 
 // jus after Interweave instead.
 export function BlogPost() {
   const { posts } = usePosts()
-  const { postKey } = usePostKey()
-  const [postContent, setPostContent] = useState('')
   const slug = useParams()["*"]
   const post = posts.find((x: Post) => x.slug === slug )
 
   useEffect(() => {
     if (typeof post !== 'undefined') {
       document.title = post.title
-      let ciphertext = new Uint8Array(Buffer.from(post.content, 'base64'))
-      let iv = post.nonce
-      console.log('post: ')
-      console.log(post)
-      console.log('nonce encoded as iv: ')
-      console.log(iv)
-      // let additionalData = new Uint8Array(Buffer.from(post.title))
-      myDecrypt(
-        ciphertext
-        ,iv
-        // ,additionalData
-        ,postKey
-      ).then(x => setPostContent(x))
-       .catch((err) => {
-        console.log('failed to decrypt because:' + err)
-      })
     }
   })
 
   if (typeof post === 'undefined') {
-    return <p>Post hidden or not yet fetched: {slug}  <Link to='/login'>Back to Login</Link></p>
+    return (
+      <div><p>Getting post: {slug}...</p><p>It may be hidden or it may not exist.</p></div>
+    )
   }
 
-  const tags = (post.tags[0] === '') ? '' : 'Tags: ' + post.tags.join(', ')
+  function daysSince(then: string) {
+    const unixNow = new Date().getTime()
+    const unixThen = new Date(then).getTime()
+    return Math.round((unixNow - unixThen) / (1000 * 60 * 60 * 24))
+  }
 
-  console.log('value of postContent: ')
-  console.log(postContent)
-  
+  const daysSinceUpdate = daysSince(post.updated)
+  const informalUpdatedDate = (daysSinceUpdate === 1) ? 'yesterday'
+                            : (daysSinceUpdate === 0) ? 'today'
+                            : (daysSinceUpdate > 730) ? `${Math.round(daysSinceUpdate/730)} years ago`
+                            : (daysSinceUpdate > 60) ? `${Math.round(daysSinceUpdate/30)} months ago`
+                            : (daysSinceUpdate > 30) ? 'a month ago'
+                            : `${daysSinceUpdate} days ago`
+
+
   // NOTE: For some reason backing up by linking to -1 pushes three entries
   // on history!  Bug?  So I go with a "not-actually-a-back-button".
   return (
     <>
-      <SplitPane left={<Link to='/posts'>Back to All notes</Link>} right={tags} />
-      <Suspense fallback={post.content}>
-        <Interweave content={postContent} transform={rewriteLinkTags}/>
+      <Suspense fallback={<p>Decrypting... This should take just a second.</p>}>
+        <table>
+          <tr>
+            <td>Planted</td>
+            <td><time className='dt-published' dateTime={post.created}>{post.created}</time></td>
+          </tr>
+          <tr>
+            <td>Last growth</td>
+            <td><time className='dt-updated' dateTime={post.updated}>{informalUpdatedDate}</time></td>
+          </tr>
+          {(post.tags[0] !== '') ? (
+            <tr>
+              <td>Tags</td>
+              <td>{post.tags.join(', ')}</td>
+            </tr>
+          ) : ''}
+        </table>
+        <article aria-labelledby='title'>
+          <Interweave content={post.content} transform={rewriteLinkTags}/>
+        </article>
       </Suspense>
     </>
   )
 }
-
-function fontFromLength(wordCount: number) {
-  const ratioOfMax = Math.log(wordCount) / Math.log(50000)
-  const size = 2 + ratioOfMax * 20
-  return size < 7 ? 7 : size
-}
-
-export const BigList = memo(function BigList() {
-  useEffect(() => { document.title = 'All posts' })
-  const { posts } = usePosts()
-  // if (posts && posts.length > 0) {
-    return (
-      <div>
-        <h1>All notes</h1>
-        <Suspense fallback={<p>Loading...  This shouldn't take more than a second.</p>}>
-          <table>
-            <tbody>
-              {posts.map((post: Post) => {
-                const fontSize = fontFromLength(post.wordcount)
-                const linkText = post.title === '' ? post.slug : post.title
-                const tags = post.tags.join(",")
-                return (
-                  <tr key={post.slug}>
-                    <td>
-                      <Link to={'/posts/' + post.slug} style={{fontSize: fontSize + 'pt'}}>
-                        {linkText}
-                      </Link>
-                    </td>
-                    <td>{tags}</td>
-                    <td>{post.created}</td>
-                    <td>{post.updated}</td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        </Suspense>
-      </div>
-    )
-
-})
 
 // use like <SplitPane left={<Contacts /> } right={<Chat /> } />
  function SplitPane(props: any) {
@@ -211,20 +183,31 @@ export function usePosts() {
 export function App() {
   const location = useLocation()
   const [cookies] = useCookies(['storedPostKey'])
-  /* const [storedPostKey, setStoredPostKey] = useCookie('storedPostKey') */
   const [postKey, setPostKey] = useState<CryptoKey | null>(null)
   const [posts, setPosts] = useState<Post[]>([])
 
-  // console.log('stored key: ' + cookies.storedPostKey)
-  
   useEffect(() => {
     // Get the big JSON of all posts
-    if (posts.length === 0) {
-      const x: Post[] = postsJson.map((post: any) => {
-        post.nonce = new Uint8Array(Object.values(post.nonce))
-        return post
-      })
-      setPosts(x)
+    if (posts.length === 0 && postKey) {
+      fetch(process.env.PUBLIC_URL + '/posts.bin',
+            {
+              headers: {
+                "Accept": 'application/octet-stream',
+                "Cache-Control": 'max-age=86400, private',
+              },
+              cache: "default"
+            }
+      )
+        .then((x: Response) => x.arrayBuffer())
+        .then((x: any) => {
+          const iv = new Uint8Array(x.slice(0, 16))
+          const ciphertext = new Uint8Array(x.slice(16))
+          return myDecrypt(ciphertext, iv, postKey)
+        })
+        .then((x: any) => {
+          const parsed = JSON.parse(x)
+          setPosts(parsed)
+        })
     }
     // Get postKey out of cookie, if there is one
     if (!postKey && cookies.storedPostKey) {
@@ -241,14 +224,32 @@ export function App() {
     }
   })
 
-  if (location.pathname === '/')
-    return (<Navigate to={!cookies.storedPostKey ? '/login' : '/posts'} />)
+  if (location.pathname === '/') {
+    const needLogin = (posts.length === 0 && !cookies.storedPostKey)
+    return (<Navigate to={needLogin ? '/login' : '/posts'} />)
+  }
 
   else return (
-    <Suspense fallback={<p>Loading</p>}>
-      <Outlet context={{ posts, setPosts
-                       , postKey, setPostKey }} />
-      <ScrollRestoration />
-    </Suspense>
+    <>
+      <nav className='top-bar'>
+        <Link to='/posts'>All notes</Link>
+        <Link to='/about'>About</Link>
+        <Link to='/now'>Now</Link>
+        <Link to='/login'>Login</Link>
+      </nav>
+      <main>
+        <Suspense fallback={<p>Loading</p>}>
+          <Outlet context={{ posts, setPosts
+                           , postKey, setPostKey }} />
+          <ScrollRestoration />
+        </Suspense>
+
+        <footer>
+          Martin Edström
+          <br /><a href='https://github.com/meedstrom'>GitHub</a>
+          <br />LinkedIn
+        </footer>
+      </main>
+    </>
   )
 }

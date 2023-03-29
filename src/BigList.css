@@ -1,0 +1,15 @@
+
+th {
+  text-align: left;
+  background: #bbb;
+  @media (prefers-color-scheme: dark) {
+    background: #777;
+  }
+}
+
+th:hover {
+    background: #777;
+    @media (prefers-color-scheme: dark) {
+        background: #444;
+  }
+}
