@@ -4,13 +4,10 @@ FROM node:19-alpine as build
 # RUN apk --no-cache -U upgrade
 WORKDIR /app
 COPY . .
-# necessary to get react-scripts for react-scripts build.
 RUN npm install
+# RUN npm audit fix
 # RUN npm audit fix --force
 RUN npm run build
-
-# but maybe we can just run directly 'npx craco build'?
-# npx craco build
 
 # ------------------ production environment ------------------------------
 

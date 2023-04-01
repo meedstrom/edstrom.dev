@@ -4,14 +4,18 @@
   "private": true,
   "dependencies": {
     "@tanstack/react-table": "^8.8.0",
+    "bootstrap": "^5.2.3",
     "buffer": "^6.0.3",
+    "bulma": "^0.9.4",
     "interweave": "^13.0.0",
     "pako": "^2.1.0",
     "react": "^18.2.0",
+    "react-bootstrap": "^2.7.2",
     "react-cookie": "^4.1.1",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.8.0",
-    "react-router-hash-link": "^2.4.3"
+    "react-router-hash-link": "^2.4.3",
+    "react-super-responsive-table": "^5.2.1"
   },
   "devDependencies": {
     "@craco/craco": "^7.1.0",
@@ -22,10 +26,12 @@
     "@types/node": "^18.11.18",
     "@types/pako": "^2.0.0",
     "@types/react": "^18.0.28",
+    "@types/react-bootstrap": "^0.32.32",
     "@types/react-dom": "^18.0.10",
     "@types/react-router-hash-link": "^2.4.5",
     "@types/react-table": "^7.7.14",
     "react-scripts": "5.0.1",
+    "sass": "^1.60.0",
     "typescript": "^4.9.5",
     "web-vitals": "^2.1.4"
   },

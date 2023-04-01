@@ -2,8 +2,9 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import './index.css'
-import { BlogPost, App } from './App'
+import { App, RandomPost, } from './App'
 import { Tablev8 } from './Tablev8'
+import { BlogPost } from './BlogPost'
 import { CookiesProvider } from 'react-cookie'
 import Login  from './Login'
 /* import reportWebVitals from './reportWebVitals' */
@@ -20,6 +21,7 @@ const myRouter = createBrowserRouter(
         <Route path="posts/*" element={<BlogPost />} />
         <Route path="posts" element={<Tablev8 />} />
         <Route path="login" element={<Login />} />
+        <Route path="random" element={<RandomPost />} />
         <Route path="now" loader={() => { return redirect('/posts/portal-what-excites-me-recently') }} />
         <Route path="about" loader={() => { return redirect('/posts/about') }} />
         {/* <Route path="news" element={<Changelog>} /> */}

@@ -1,33 +1,32 @@
 
-html, body, #root {
-  width: 100%;
-  
+--foreground: #111;
+--background: #ccc;
+
+@media (prefers-color-scheme: dark) {
+  --foreground: #cdc;
+  --background: #000;
 }
 
 body {
-  background: #ddd;
-  color: #111;
-
-  @media (prefers-color-scheme: dark) {
-    background: #000;
-    color: #ccc;
-  }
+  color: var(--foreground);
+  background: var(--background);
 }
+
 
 main {
-  padding: 4%;
+  padding: 3%;
 }
+
 /* Taken from default color in Firefox.  Colors in Chromium ugly esp. on #edb background.  */
 /* a { */
 /*   color: #0066cc; */
 /* } */
 
 
+/* TODO: no margin-right on mobile pls */
 blockquote {
   background: #ccc;
-  /* padding-left: 1em; */
-  /* padding-right: 1em; */
-  padding: 0.5em 1em 0.5em 1em;
+  /* padding: 0.5em 1em 0.5em 1em; */
 
   @media (prefers-color-scheme: dark) {
     background: #444;
@@ -52,38 +51,45 @@ footer {
   width: 100%;
   overflow: hidden;
 }
+
 .top-bar a {
-  background-color: #afa;
+  background-color: #aea;
   float: left;
   padding: 0.5em;
   margin: 2px;
 }
 
-/* TODO: What if the margin compounds?  The first rule applies to all body text
+/* REVIEW: What if the margin compounds?  The first rule applies to all body text
  * in the entire page, and the succeeding rules don't add to the margin, so they
  * are unnecessary except for how they affect succeeding h2 tags? */
 
-/* h2 ~ *:not(h2):not(ul):not(li) { */
+/* h2 ~ *:not(h2):not(ul):not(ol):not(li) { */
 /*   margin-left: 2em; */
 /* } */
 
 h3,h4,h5,h6,h7,h8 {
+  margin-left: 0.5em;
+}
+
+h3 ~ *:not(h3):not(ul):not(ol):not(li) {
   margin-left: 1em;
 }
-
-h3 ~ *:not(h3):not(ul):not(li) {
-  margin-left: 2em;
-}
-
-
-h4 ~ *:not(h4):not(ul):not(li) {
-  margin-left: 2em;
+h4 ~ *:not(h4):not(ul):not(ol):not(li) {
+  margin-left: 1em;
 }
 
 a[href^="http://"]:after,
 a[href^="https://"]:after {
   color: blue;
   content: "↗️";
+}
+
+.broken-link {
+  color: red;
+}
+
+.stub-link {
+  color: var(--foreground);
 }
 
 .App-logo {

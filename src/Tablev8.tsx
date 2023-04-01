@@ -1,6 +1,4 @@
 /* eslint semi: ["warn", "never"] */
-import './App.css'
-import './BigList.css'
 import React from 'react'
 import { HashLink as Link, } from 'react-router-hash-link'
 import { usePosts, Post, } from './App'
@@ -19,14 +17,16 @@ const columnHelper = createColumnHelper<Post>()
 const columns = [
   columnHelper.accessor('created', {
     header: () => 'Created',
+    cell: info => <time className='dt-published'>{info.getValue()}</time>,
   }),
   columnHelper.accessor('title', {
     header: 'Note',
-    cell: props => (
-      <Link to={props.row.original.slug} style={{fontSize: `${fontFromLength(props.row.original.wordcount)}pt`}} >
-        {props.getValue()}
-      </Link>
-    ),
+    /* cell: props => (
+     *   <Link to={props.row.original.slug} style={{fontSize: `${fontFromLength(props.row.original.wordcount)}pt`}} >
+     *     {props.getValue()}
+     *   </Link>
+     * ), */
+    cell: props => <Link to={props.row.original.slug}>{props.getValue()}</Link>,
   }),
   columnHelper.accessor('wordcount', {
     header: () => 'Words#',
@@ -61,12 +61,13 @@ export function Tablev8() {
     getSortedRowModel: getSortedRowModel(),
     state: { sorting, },
     onSortingChange: setSorting,
-    debugTable: true,
+    enableSortingRemoval: true,
   })
 
   return (
-    <div className="p-2">
-      <table>
+    <div className='table-container'>
+      {/* <Table size="sm" striped responsive> */}
+      <table className='table is-striped is-narrow'>
         <thead>
           {table.getHeaderGroups().map(headerGroup => (
             <tr key={headerGroup.id}>

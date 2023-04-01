@@ -1,30 +1,34 @@
 /* eslint semi: ["warn", "never"] */
-import './App.css'
+/* import './App.css' */
+// import 'bootstrap/dist/css/bootstrap.min.css'
+/* import 'bulma/css/bulma.min.css' */
+import './bulmaOverride.scss'
+/* import 'bulma/bulma.sass' */
 import pako from 'pako'
-import { useCookies } from 'react-cookie'
 import React from 'react'
-import { Interweave, Node } from 'interweave'
+import { useCookies } from 'react-cookie'
 import { Buffer } from 'buffer'
 import { HashLink as Link } from 'react-router-hash-link'
-// import postsBin from './posts.bin'
-
 import {
   Suspense,
   useState,
   useEffect,
 } from 'react'
-
 import {
   Outlet,
   Navigate,
   ScrollRestoration,
-  useParams,
   useLocation,
   useOutletContext,
 } from 'react-router-dom'
+/* import Button from 'react-bootstrap/Button';
+ * import Container from 'react-bootstrap/Container';
+ * import Form from 'react-bootstrap/Form';
+ * import Nav from 'react-bootstrap/Nav';
+ * import Navbar from 'react-bootstrap/Navbar';
+ * import NavDropdown from 'react-bootstrap/NavDropdown'; */
 
 const { subtle } = globalThis.crypto
-
 
 export type Post = {
   title: string
@@ -47,7 +51,6 @@ export const hardcodedWrappingKey = await subtle.importKey(
 
 async function myDecrypt( ciphertext: Uint8Array
                         , iv: Uint8Array
-                        // , additionalData: Uint8Array
                         , postKey: CryptoKey | null) {
   // TODO: catch more detailed exceptions? with try/catch?
   console.log(iv)
@@ -56,7 +59,6 @@ async function myDecrypt( ciphertext: Uint8Array
   if (postKey) {
     const decryptedBuffer = await subtle.decrypt(
       { name: 'AES-GCM', iv }
-      // { name: 'AES-GCM', iv, additionalData }
       , postKey
       , ciphertext
     )
@@ -65,7 +67,6 @@ async function myDecrypt( ciphertext: Uint8Array
     const decompressed = pako.ungzip(decryptedBuffer)
     const text = Buffer.from(decompressed).toString()
     return text
-    /* return await new Response(decryptedBuffer).text() */
   }
   else {
     console.log('postKey was undefined')
@@ -73,109 +74,35 @@ async function myDecrypt( ciphertext: Uint8Array
   }
 }
 
-// I used to render the Org-exported HTML with just <Markup />,
-// which meant the links were <a> tags, unhandled by React Router.
-// For the user, clicking these links had an effect similar to as
-// if they'd entered the URLs manually: an ugly transition involving
-// a Flash Of Unstyled Content.
-// Solution: rewrite all the <a href=...> into <Link to=...>, so React
-// Router handles the links!
-// NOTE: destroys any other props in the <a> tag
-function rewriteLinkTags (node: HTMLElement, children: Node[]): React.ReactNode {
-  if (node.tagName.toLowerCase() === "a") {
-    const href = node.getAttribute('href')
-    if (href) {
-      return <Link className={className} to={href}>{children}</Link>
-    }
-  }
-}
 
-// Maybe can make perf even faster by pre-decrypting every linked-to post in the
-// current post.  I suspect that would radically change what goes in the BlogPost
-// component in the first place, maybe remove all its current hooks, work done
-// jus after Interweave instead.
-export function BlogPost() {
+export function RandomPost() {
   const { posts } = usePosts()
-  const slug = useParams()["*"]
-  const post = posts.find((x: Post) => x.slug === slug )
-
-  useEffect(() => {
-    if (typeof post !== 'undefined') {
-      document.title = post.title
+  if (posts.length === 0)
+    return <p>Loading...</p>
+  else {
+    let subset = new Set(posts.filter(x => !x.tags.includes('stub')).map(x => x.slug))
+    const seen = new Set(JSON.parse(window.localStorage.getItem('seen')))
+    // NOTE: set-difference is coming to JS, check if it's happened yet  https://github.com/tc39/proposal-set-methods
+    for (const item of seen) {
+      subset.delete(item)
     }
-  })
-
-  if (typeof post === 'undefined') {
-    return (
-      <div><p>Getting post: {slug}...</p><p>It may be hidden or it may not exist.</p></div>
-    )
+    const unseen = Array.from(subset)
+    const randomSlug = unseen[Math.floor(Math.random() * unseen.length)]
+    return <Navigate to={`/posts/${randomSlug}`} />
   }
-
-  function daysSince(then: string) {
-    const unixNow = new Date().getTime()
-    const unixThen = new Date(then).getTime()
-    return Math.round((unixNow - unixThen) / (1000 * 60 * 60 * 24))
-  }
-
-  const daysSinceUpdate = daysSince(post.updated)
-  const informalUpdatedDate = (daysSinceUpdate === 1) ? 'yesterday'
-                            : (daysSinceUpdate === 0) ? 'today'
-                            : (daysSinceUpdate > 730) ? `${Math.round(daysSinceUpdate/730)} years ago`
-                            : (daysSinceUpdate > 60) ? `${Math.round(daysSinceUpdate/30)} months ago`
-                            : (daysSinceUpdate > 30) ? 'a month ago'
-                            : `${daysSinceUpdate} days ago`
-
-
-  // NOTE: For some reason backing up by linking to -1 pushes three entries
-  // on history!  Bug?  So I go with a "not-actually-a-back-button".
-  return (
-    <>
-      <Suspense fallback={<p>Decrypting... This should take just a second.</p>}>
-        <table>
-          <tr>
-            <td>Planted</td>
-            <td><time className='dt-published' dateTime={post.created}>{post.created}</time></td>
-          </tr>
-          <tr>
-            <td>Last growth</td>
-            <td><time className='dt-updated' dateTime={post.updated}>{informalUpdatedDate}</time></td>
-          </tr>
-          {(post.tags[0] !== '') ? (
-            <tr>
-              <td>Tags</td>
-              <td>{post.tags.join(', ')}</td>
-            </tr>
-          ) : ''}
-        </table>
-        <article aria-labelledby='title'>
-          <Interweave content={post.content} transform={rewriteLinkTags}/>
-        </article>
-      </Suspense>
-    </>
-  )
-}
-
-// use like <SplitPane left={<Contacts /> } right={<Chat /> } />
- function SplitPane(props: any) {
-  return (
-    <div className="SplitPane">
-      <div className="SplitPane-left">
-        {props.left}      </div>
-      <div className="SplitPane-right">
-        {props.right}      </div>
-    </div>
-  )
 }
 
 type ContextType = {
-   postKey: CryptoKey | null
-  ,setPostKey: Function
-  ,posts: Post[]
-  ,setPosts: Function
+  postKey: CryptoKey | null
+  setPostKey: Function
+  posts: Post[]
+  setPosts: Function
 }
+
 export function usePostKey() {
   return useOutletContext<ContextType>()
 }
+
 export function usePosts() {
   return useOutletContext<ContextType>()
 }
@@ -195,7 +122,7 @@ export function App() {
                 "Accept": 'application/octet-stream',
                 "Cache-Control": 'max-age=86400, private',
               },
-              cache: "default"
+              cache: "default",
             }
       )
         .then((x: Response) => x.arrayBuffer())
@@ -205,7 +132,7 @@ export function App() {
           return myDecrypt(ciphertext, iv, postKey)
         })
         .then((x: any) => {
-          const parsed = JSON.parse(x)
+          const parsed: Post[] = JSON.parse(x)
           setPosts(parsed)
         })
     }
@@ -224,32 +151,47 @@ export function App() {
     }
   })
 
+  const seen = JSON.parse(window.localStorage.getItem('seen'))
+  
   if (location.pathname === '/') {
     const needLogin = (posts.length === 0 && !cookies.storedPostKey)
     return (<Navigate to={needLogin ? '/login' : '/posts'} />)
   }
-
   else return (
     <>
-      <nav className='top-bar'>
-        <Link to='/posts'>All notes</Link>
-        <Link to='/about'>About</Link>
-        <Link to='/now'>Now</Link>
-        <Link to='/login'>Login</Link>
+      {/* <Navbar expand bg='dark' variant='dark'>
+          <Nav active>
+          <Nav.Item><Nav.Link as={Link} href='/posts'>All notes</Nav.Link></Nav.Item>
+          <Nav.Item><Nav.Link as={Link} href='/about'>About</Nav.Link></Nav.Item>
+          <Nav.Item><Nav.Link as={Link} href='/now'>Now</Nav.Link></Nav.Item>
+          <Nav.Item><Nav.Link as={Link} href='/random'>Random</Nav.Link></Nav.Item>
+          <Nav.Item><Nav.Link as={Link} href='/login'>Login</Nav.Link></Nav.Item>
+          </Nav>
+          </Navbar>*/}
+      <nav className="navbar" role="navigation" aria-label="main navigation">
+        <div className="navbar-brand">
+          <Link className="navbar-item is-link has-background-link" to="/posts">All notes</Link>
+          <Link className="navbar-item is-link has-background-link" to="/about">About</Link>
+          <Link className="navbar-item is-link has-background-link" to="/now">Now</Link>
+          <Link className="navbar-item is-link has-background-link" to="/random">Random</Link>
+          <Link className="navbar-item is-link has-background-link" to="/login">Login</Link>
+          {seen ? `Visited ${seen.length} of ${posts.length}` : '' }
+        </div>
       </nav>
-      <main>
-        <Suspense fallback={<p>Loading</p>}>
-          <Outlet context={{ posts, setPosts
-                           , postKey, setPostKey }} />
-          <ScrollRestoration />
-        </Suspense>
 
-        <footer>
-          Martin Edström
-          <br /><a href='https://github.com/meedstrom'>GitHub</a>
-          <br />LinkedIn
-        </footer>
-      </main>
+    <div className="section pt-3">
+      <Suspense fallback={<p>Loading</p>}>
+        <Outlet context={{ posts, setPosts,
+                           postKey, setPostKey, }} />
+        <ScrollRestoration />
+      </Suspense>
+    </div>
+    <footer className="footer has-text-centered">
+      Martin Edström
+      <br /><a href="https://github.com/meedstrom">GitHub</a>
+      <br />LinkedIn
+    </footer>
+
     </>
   )
 }
