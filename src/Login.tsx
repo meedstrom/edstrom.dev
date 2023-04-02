@@ -14,8 +14,8 @@ const { subtle } = globalThis.crypto
    { name: 'AES-KW', length: 256 }
    ,true
    ,['wrapKey', 'unwrapKey']
-   ).then(newKey => window.crypto.subtle.exportKey('raw', newKey))
-   .then(x => console.log(Array.apply([], new Uint8Array(x)).join(',')))
+   ).then(newKey => window.crypto.subtle.exportKey('raw', newKey)
+   ).then(x => console.log(Array.apply([], new Uint8Array(x)).join(',')))
  */
 
 // Test with
@@ -55,13 +55,6 @@ export default function Login() {
         console.log(wrappedPostKey)
 
         const stringified = Buffer.from(wrappedPostKey).toString('base64')
-
-        /*
-         *         await setStoredPostKey(
-         *             Buffer.from(wrappedPostKey).toString('base64')
-         *             ,{ days: 7, SameSite: 'Strict', Secure: true }
-         *         )
-         *  */
 
         await setCookie('storedPostKey'
             ,stringified

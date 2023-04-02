@@ -26,7 +26,12 @@ const columns = [
      *     {props.getValue()}
      *   </Link>
      * ), */
-    cell: props => <Link to={props.row.original.slug}>{props.getValue()}</Link>,
+    cell: props => (
+      <Link className={props.row.original.tags.includes('stub') ? 'stub-link' : 'working-link'}
+            to={props.row.original.slug}>
+        {props.getValue()}
+      </Link>
+    ),
   }),
   columnHelper.accessor('wordcount', {
     header: () => 'Words#',

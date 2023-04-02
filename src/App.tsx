@@ -1,11 +1,6 @@
 /* eslint semi: ["warn", "never"] */
-/* import './App.css' */
-// import 'bootstrap/dist/css/bootstrap.min.css'
-/* import 'bulma/css/bulma.min.css' */
 import './bulmaOverride.scss'
-/* import 'bulma/bulma.sass' */
 import pako from 'pako'
-import React from 'react'
 import { useCookies } from 'react-cookie'
 import { Buffer } from 'buffer'
 import { HashLink as Link } from 'react-router-hash-link'
@@ -21,12 +16,6 @@ import {
   useLocation,
   useOutletContext,
 } from 'react-router-dom'
-/* import Button from 'react-bootstrap/Button';
- * import Container from 'react-bootstrap/Container';
- * import Form from 'react-bootstrap/Form';
- * import Nav from 'react-bootstrap/Nav';
- * import Navbar from 'react-bootstrap/Navbar';
- * import NavDropdown from 'react-bootstrap/NavDropdown'; */
 
 const { subtle } = globalThis.crypto
 
@@ -80,13 +69,14 @@ export function RandomPost() {
   if (posts.length === 0)
     return <p>Loading...</p>
   else {
-    let subset = new Set(posts.filter(x => !x.tags.includes('stub')).map(x => x.slug))
-    const seen = new Set(JSON.parse(window.localStorage.getItem('seen')))
+    const storedSeen = window.localStorage.getItem('seen')
+    const seen = storedSeen ? new Set(JSON.parse(storedSeen)) : new Set()
+    let allNonStubs = new Set(posts.filter(x => !x.tags.includes('stub')).map(x => x.slug))
     // NOTE: set-difference is coming to JS, check if it's happened yet  https://github.com/tc39/proposal-set-methods
     for (const item of seen) {
-      subset.delete(item)
+      allNonStubs.delete(item)
     }
-    const unseen = Array.from(subset)
+    const unseen = Array.from(allNonStubs)
     const randomSlug = unseen[Math.floor(Math.random() * unseen.length)]
     return <Navigate to={`/posts/${randomSlug}`} />
   }
@@ -147,11 +137,12 @@ export function App() {
         ,true
         ,['encrypt', 'decrypt']
       ).then((x) => setPostKey(x))
-            .catch((error: Error) => console.log(error))
+       .catch((error: Error) => console.log(error))
     }
   })
 
-  const seen = JSON.parse(window.localStorage.getItem('seen'))
+  const storedSeen = window.localStorage.getItem('seen')
+  const seen = storedSeen ? JSON.parse(storedSeen) : []
   
   if (location.pathname === '/') {
     const needLogin = (posts.length === 0 && !cookies.storedPostKey)
@@ -159,23 +150,15 @@ export function App() {
   }
   else return (
     <>
-      {/* <Navbar expand bg='dark' variant='dark'>
-          <Nav active>
-          <Nav.Item><Nav.Link as={Link} href='/posts'>All notes</Nav.Link></Nav.Item>
-          <Nav.Item><Nav.Link as={Link} href='/about'>About</Nav.Link></Nav.Item>
-          <Nav.Item><Nav.Link as={Link} href='/now'>Now</Nav.Link></Nav.Item>
-          <Nav.Item><Nav.Link as={Link} href='/random'>Random</Nav.Link></Nav.Item>
-          <Nav.Item><Nav.Link as={Link} href='/login'>Login</Nav.Link></Nav.Item>
-          </Nav>
-          </Navbar>*/}
       <nav className="navbar" role="navigation" aria-label="main navigation">
         <div className="navbar-brand">
-          <Link className="navbar-item is-link has-background-link" to="/posts">All notes</Link>
-          <Link className="navbar-item is-link has-background-link" to="/about">About</Link>
-          <Link className="navbar-item is-link has-background-link" to="/now">Now</Link>
-          <Link className="navbar-item is-link has-background-link" to="/random">Random</Link>
-          <Link className="navbar-item is-link has-background-link" to="/login">Login</Link>
-          {seen ? `Visited ${seen.length} of ${posts.length}` : '' }
+          <Link className="navbar-item is-link" to="/posts">All notes</Link>
+          <Link className="navbar-item is-link" to="/posts/about">About</Link>
+          <Link className="navbar-item is-link" to="/now">Now</Link>
+          <Link className="navbar-item is-link" to="/random">Random</Link>
+          <Link className="navbar-item is-link" to="/posts/blogroll">Blogroll</Link>
+          <Link className="navbar-item is-link" to="/login">Login</Link>
+          <div className="navbar-item">{seen ? `Visited ${seen.length} of ${posts.length}` : '' }</div>
         </div>
       </nav>
 
