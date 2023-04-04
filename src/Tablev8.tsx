@@ -12,47 +12,46 @@ import {
   getSortedRowModel,
 } from '@tanstack/react-table'
 
-const columnHelper = createColumnHelper<Post>()
-
-const columns = [
-  columnHelper.accessor('created', {
-    header: () => 'Created',
-    cell: info => <time className='dt-published'>{info.getValue()}</time>,
-  }),
-  columnHelper.accessor('title', {
-    header: 'Note',
-    /* cell: props => (
-     *   <Link to={props.row.original.slug} style={{fontSize: `${fontFromLength(props.row.original.wordcount)}pt`}} >
-     *     {props.getValue()}
-     *   </Link>
-     * ), */
-    cell: props => (
-      <Link className={props.row.original.tags.includes('stub') ? 'stub-link' : 'working-link'}
-            to={props.row.original.slug}>
-        {props.getValue()}
-      </Link>
-    ),
-  }),
-  columnHelper.accessor('wordcount', {
-    header: () => 'Words#',
-  }),
-  columnHelper.accessor('backlinks', {
-    header: 'Backlinks',
-  }),
-  columnHelper.accessor('tags', {
-    header: () => 'Tags',
-    cell: info => <i>{info.getValue().join(',')}</i>,
-  }),
-  columnHelper.accessor('updated', {
-    header: 'Updated',
-  }),
-]
 
 function fontFromLength(wordCount: number) {
   const ratioOfMax = Math.log(wordCount) / Math.log(50000)
   const size = 2 + ratioOfMax * 20
   return size < 8 ? 8 : size
 }
+
+  const columnHelper = createColumnHelper<Post>()
+  const columns =
+     [
+       columnHelper.accessor('title', {
+         header: 'Note',
+         cell: props => (
+           <Link className={props.row.original.tags.includes('stub') ? 'stub-link' : 'working-link'}
+                 to={props.row.original.slug}>
+             {props.getValue()}
+           </Link>
+         ),
+       }),
+       columnHelper.accessor('wordcount', {
+        header: () => 'Words#',
+      }),
+       /* columnHelper.accessor('backlinks', {
+        *   header: 'Backlinks',
+        * }), */
+       /* columnHelper.accessor('tags', {
+        *   header: () => 'Tags',
+        *   cell: info => <i>{info.getValue().join(',')}</i>,
+        * }), */
+      columnHelper.accessor('created', {
+        header: () => 'Created',
+        // non-breaking hyphens
+        cell: info => <time className='dt-published'>{info.getValue().replaceAll('-', '‑')}</time>,
+      }),
+       columnHelper.accessor('updated', {
+         header: 'Updated',
+         cell: info => <time className='dt-published'>{info.getValue().replaceAll('-', '‑')}</time>,
+       }),
+     ]
+
 
 export function Tablev8() {
   const { posts } = usePosts()
@@ -72,7 +71,7 @@ export function Tablev8() {
   return (
     <div className='table-container'>
       {/* <Table size="sm" striped responsive> */}
-      <table className='table is-striped is-narrow'>
+      <table className='table is-striped is-narrow is-fullwidth'>
         <thead>
           {table.getHeaderGroups().map(headerGroup => (
             <tr key={headerGroup.id}>

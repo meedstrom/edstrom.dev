@@ -70,29 +70,37 @@ export default function Login() {
                 ,hardcodedWrappingKey
                 ,'AES-KW'
                 ,'AES-GCM'
-                ,true
+                ,false
                 ,['encrypt', 'decrypt']
         ))
 
         navigate('/posts')
     }
   return (
-    <div className="login-wrapper">
-      <h1>Please log in</h1>
+    <div className="section pt-3">
+      <h1 className="title">Please log in</h1>
       <form onSubmit={handleSubmit}>
-        <label>
-          <p>Username</p>
-          <input type="text" value="guest" readOnly />
-        </label>
-        <label>
-          <p>Passphrase</p>
-          <input type="password" autoFocus onChange={x => setPassword(x.target.value)} />
-        </label>
-        <div>
-          <br />
-          <button type="submit">I accept a cookie, log me in</button>
+        <div className="field">
+          <label className="label">Username</label>
+          <div className="control">
+            <input className="input" type="text" value="guest" readOnly />
+          </div>
+        </div>
+        <div className="field">
+          <label className="label">Passphrase</label>
+          <div className="control">
+            <input className="input" type="password" autoFocus onChange={x => setPassword(x.target.value)} />
+          </div>
+        </div>
+        <div className="field">
+          <div className="control">
+            {/* <button className="button is-primary" type="submit" onClick={() => this.setState({className: className + " is-loading"}) }> */}
+            <button className="button is-primary" type="submit">
+              I accept a cookie, log me in
+            </button>
+          </div>
         </div>
       </form>
-    </div>
+      </div>
   )
 }

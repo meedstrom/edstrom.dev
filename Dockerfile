@@ -1,23 +1,21 @@
-FROM node:19-alpine
+# ------------------ build environment -----------------------------------
+
+FROM node:19-alpine as build
+RUN apk --no-cache -U upgrade
 WORKDIR /app
-
-COPY package.json ./
-COPY package-lock.json ./
-
-# The VOLUME instruction does not support specifying a host-dir parameter. You must specify the mountpoint when you create or run the container.
-VOLUME /app
-VOLUME /app/node_modules
-
+COPY . .
 RUN npm install
+# RUN npm audit fix --only=prod || echo
+# RUN npm audit fix --only=prod --force
+RUN npx craco build
 
-# The EXPOSE instruction does not actually publish the port. It functions as a
-# type of documentation between the person who builds the image and the person who
-# runs the container, about which ports are intended to be published. To actually
-# publish the port when running the container, use the -p flag on docker run to
-# publish and map one or more ports, or the -P flag to publish all exposed ports
-# and map them to high-order ports.
-EXPOSE 3000
+# ------------------ production environment ------------------------------
 
-# NOTE: As specified in package.json, `npm start` calls `react-scripts start`.
-# RUN npm run build
-CMD ["npm", "start"]
+FROM nginx:stable-alpine
+COPY --from=build /app/build /usr/share/nginx/html
+COPY --from=build /app/nginx/nginx.conf /etc/nginx/conf.d/default.conf
+RUN chmod +r -R /usr/share/nginx/
+RUN chmod +r -R /etc/nginx/
+EXPOSE 8080
+# EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]

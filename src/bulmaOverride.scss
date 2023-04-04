@@ -7,7 +7,6 @@ $body-line-height: 1.3;
 
 a[href^="http://"]:after,
 a[href^="https://"]:after {
-  color: blue;
   content: "↗️";
 }
 
@@ -15,12 +14,26 @@ a[href^="https://"]:after {
 
 
 @import "~bulma/bulma.sass";
-
+@import "~bulma-prefers-dark/bulma-prefers-dark.sass";
 
 .broken-link {
   color: $danger;
 }
 
 .stub-link {
-  color: $text;;
+  color: $text;
+}
+
+.section a {
+  text-decoration: underline;
+}
+
+// Testing this, but should probably use $size-7 or something nonzero
+@media only screen and (max-width: 768px) {
+  article {
+    padding-left:  0 !important;
+    padding-right: 0 !important;
+    margin-right:  0 !important;
+    margin-right:  0 !important;
+  }
 }

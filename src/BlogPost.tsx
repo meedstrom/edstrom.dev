@@ -6,6 +6,18 @@ import { useEffect, Suspense, } from 'react'
 import { HashLink as Link } from 'react-router-hash-link'
 import { useParams } from 'react-router-dom'
 
+function daysSince(then: string): string {
+    const unixNow = new Date().getTime()
+    const unixThen = new Date(then).getTime()
+    const days = Math.round((unixNow - unixThen) / (1000 * 60 * 60 * 24))
+    return (days === 1) ? 'yesterday'
+         : (days === 0) ? 'today'
+         : (days > 730) ? `${Math.round(days/730)} years ago`
+         : (days > 60) ? `${Math.round(days/30)} months ago`
+         : (days > 30) ? 'a month ago'
+         : `${days} days ago`
+}
+
 export function BlogPost() {
     const { posts } = usePosts()
     const slug = useParams()["*"]
@@ -19,22 +31,10 @@ export function BlogPost() {
 
     if (typeof post === 'undefined') {
         if (posts.length === 0) {
-            return <p>Decrypting... This should take just a second.</p>
+            return <div className="section">Just a second...</div>
         } else {
-            return <p>Page hidden or doesn't exist: {slug}</p>
+            return <div className="section">Page hidden or doesn't exist: {slug}</div>
         }
-    }
-
-    function daysSince(then: string): string {
-        const unixNow = new Date().getTime()
-        const unixThen = new Date(then).getTime()
-        const days = Math.round((unixNow - unixThen) / (1000 * 60 * 60 * 24))
-        return (days === 1) ? 'yesterday'
-             : (days === 0) ? 'today'
-             : (days > 730) ? `${Math.round(days/730)} years ago`
-             : (days > 60) ? `${Math.round(days/30)} months ago`
-             : (days > 30) ? 'a month ago'
-             : `${days} days ago`
     }
 
     const informalUpdated = daysSince(post.updated)
@@ -47,6 +47,7 @@ export function BlogPost() {
     // a Flash Of Unstyled Content.
     // Solution: rewrite all the <a href=...> into <Link to=...>, so React
     // Router handles the links!
+    // While we're at it, we can color the links specially.
     // NOTE: destroys any other props in the <a> tag.
     // NOTE: must be an arrow function to use the outer 'this' and thereby access
     //       the value of 'posts'.
@@ -55,7 +56,7 @@ export function BlogPost() {
             const href = node.getAttribute('href')
             if (href) {
                 let linkClass = 'working-link'
-                if (!href.startsWith('http')) {
+                if (!href.startsWith('http') && !href.startsWith('#')) {
                     const found = posts.find(x => x.slug === href.split('#')[0])
                     if (!found) {
                         linkClass = 'broken-link'
@@ -70,28 +71,29 @@ export function BlogPost() {
     }
 
     // Track what pages the visitor has seen
-    let seen = new Set()
+    /* let seen = new Set() */
     const storedSeen: string | null = window.localStorage.getItem('seen')
-    if (storedSeen) {
-        seen = new Set(Array.from(JSON.parse(storedSeen)))
-    }
-    if (!seen.has(post.slug)) {
-        seen.add(post.slug)
-    } else {
-        // Reset if visitor has seen all pages
-        const all = posts.filter(x => !x.tags.includes('stub'))
-                         .map(x => x.slug)
-        if (!all.find(x => !seen.has(x))) {
+    /* if (storedSeen) {
+     *     seen = new Set(Array.from(JSON.parse(storedSeen)))
+     * } */
+    const seen = new Set<string>(storedSeen ? JSON.parse(storedSeen) : [])
+    if (seen.has(post.slug)) {
+        // If visitor has now seen all pages, start over from scratch
+        const all = posts.filter(post => !post.tags.includes('stub'))
+                         .map(post => post.slug)
+        if (!all.find(slug => !seen.has(slug))) {
             seen.clear()
         }
+    } else {
+        seen.add(post.slug)
     }
     window.localStorage.setItem('seen',  JSON.stringify([...seen]))
 
     return (
-        <>
-            <Suspense fallback={<p>Decrypting... This should take just a second.</p>}>
+        <div className="section pt-3">
+            <Suspense fallback={<p>Just a second...</p>}>
                 <article aria-labelledby='title'>
-                    <table className='table is-narrow is-bordered'>
+                    <table className='table is-narrow is-bordered is-small'>
                         <tbody>
                             <tr>
                                 <td>Planted</td>
@@ -114,7 +116,7 @@ export function BlogPost() {
                     </div>
                 </article>
             </Suspense>
-        </>
+        </div>
     )
 }
 /*

@@ -34,32 +34,42 @@ export const hardcodedWrappingKey = await subtle.importKey(
   'raw'
   ,new Uint8Array([30,225,107,217,205,158,108,110,187,158,194,55,203,81,30,84,109,198,83,29,23,130,131,28,110,122,228,24,11,97,140,7])
   ,'AES-KW'
-  ,true
+  ,false
   ,['wrapKey', 'unwrapKey']
 )
 
 async function myDecrypt( ciphertext: Uint8Array
                         , iv: Uint8Array
                         , postKey: CryptoKey | null) {
-  // TODO: catch more detailed exceptions? with try/catch?
+  // TODO: get subtle.decrypt to print more detailed exceptions?
+  console.log('Decrypting...')
   console.log(iv)
   console.log(postKey)
   console.log(ciphertext)
   if (postKey) {
-    const decryptedBuffer = await subtle.decrypt(
+    let decryptedBuffer: ArrayBuffer | null = null
+    try {
+     decryptedBuffer = await subtle.decrypt(
       { name: 'AES-GCM', iv }
       , postKey
       , ciphertext
     )
-    // const decompressedBytes = await new Response(decryptedBuffer).body.pipeThrough(new DecompressionStream('gzip'))
-    // return await new Response(decompressedBytes).text()
-    const decompressed = pako.ungzip(decryptedBuffer)
-    const text = Buffer.from(decompressed).toString()
-    return text
+    } catch (e) {
+      console.log(e)
+    }
+
+    if (decryptedBuffer) {
+      const decompressed = pako.ungzip(decryptedBuffer)
+      const text = Buffer.from(decompressed).toString()
+      return text
+    } else {
+      console.log('Decryption failed')
+      return null
+    }
   }
   else {
     console.log('postKey was undefined')
-    return 'Decryption failed'
+    return null
   }
 }
 
@@ -69,14 +79,15 @@ export function RandomPost() {
   if (posts.length === 0)
     return <p>Loading...</p>
   else {
-    const storedSeen = window.localStorage.getItem('seen')
-    const seen = storedSeen ? new Set(JSON.parse(storedSeen)) : new Set()
-    let allNonStubs = new Set(posts.filter(x => !x.tags.includes('stub')).map(x => x.slug))
+    const cachedSeen = window.localStorage.getItem('seen')
+    const seen = new Set<string>(cachedSeen ? JSON.parse(cachedSeen) : null)
+    let allNonStubs = new Set<string>(posts.filter(x => !x.tags.includes('stub'))
+                                           .map(x => x.slug))
     // NOTE: set-difference is coming to JS, check if it's happened yet  https://github.com/tc39/proposal-set-methods
     for (const item of seen) {
       allNonStubs.delete(item)
     }
-    const unseen = Array.from(allNonStubs)
+    const unseen = [...allNonStubs]
     const randomSlug = unseen[Math.floor(Math.random() * unseen.length)]
     return <Navigate to={`/posts/${randomSlug}`} />
   }
@@ -104,8 +115,8 @@ export function App() {
   const [posts, setPosts] = useState<Post[]>([])
 
   useEffect(() => {
-    // Get the big JSON of all posts
     if (posts.length === 0 && postKey) {
+      // Get the big JSON of all posts if we have the key
       fetch(process.env.PUBLIC_URL + '/posts.bin',
             {
               headers: {
@@ -121,9 +132,12 @@ export function App() {
           const ciphertext = new Uint8Array(x.slice(16))
           return myDecrypt(ciphertext, iv, postKey)
         })
-        .then((x: any) => {
-          const parsed: Post[] = JSON.parse(x)
-          setPosts(parsed)
+        .then((x: string | null) => {
+          if (x) {
+            const parsed: Post[] = JSON.parse(x)
+            setPosts(parsed)
+            console.log(posts)
+          }
         })
     }
     // Get postKey out of cookie, if there is one
@@ -134,15 +148,15 @@ export function App() {
         ,hardcodedWrappingKey
         ,'AES-KW'
         ,'AES-GCM'
-        ,true
+        ,false
         ,['encrypt', 'decrypt']
       ).then((x) => setPostKey(x))
        .catch((error: Error) => console.log(error))
     }
   })
 
-  const storedSeen = window.localStorage.getItem('seen')
-  const seen = storedSeen ? JSON.parse(storedSeen) : []
+  const cachedSeen = window.localStorage.getItem('seen')
+  const seen = cachedSeen ? JSON.parse(cachedSeen) : []
   
   if (location.pathname === '/') {
     const needLogin = (posts.length === 0 && !cookies.storedPostKey)
@@ -150,30 +164,39 @@ export function App() {
   }
   else return (
     <>
-      <nav className="navbar" role="navigation" aria-label="main navigation">
+      <nav className="navbar is-size-7-mobile" role="navigation" aria-label="main navigation">
         <div className="navbar-brand">
-          <Link className="navbar-item is-link" to="/posts">All notes</Link>
-          <Link className="navbar-item is-link" to="/posts/about">About</Link>
-          <Link className="navbar-item is-link" to="/now">Now</Link>
-          <Link className="navbar-item is-link" to="/random">Random</Link>
-          <Link className="navbar-item is-link" to="/posts/blogroll">Blogroll</Link>
-          <Link className="navbar-item is-link" to="/login">Login</Link>
-          <div className="navbar-item">{seen ? `Visited ${seen.length} of ${posts.length}` : '' }</div>
+          <Link className="navbar-item is-link is-narrow" to="/posts/about">About</Link>
+          <Link className="navbar-item is-link is-narrow" to="/posts">All</Link>
+          <Link className="navbar-item is-link is-narrow" to="/random">Random</Link>
+          <div className="navbar-item is-info">{seen ? `Seen ${seen.length} of ${posts.length}` : '' }</div>
+          <a role="button" className="navbar-burger" aria-label="menu" aria-expanded="false" data-target="navbarBasicExample">
+            {/* Looks hacky, but Bulma recommends this method.  This makes three burger patties. */}
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+          </a>
+        </div>
+        <div id="navbarBasicExample" className="navbar-menu">
+          <div className="navbar-end">
+            <Link className="navbar-item is-link" to="/posts/blogroll">Blogroll</Link>
+            <Link className="navbar-item is-link" to="/now">Now</Link>
+            <Link className="navbar-item is-link" to="/login">Login</Link>
+          </div>
         </div>
       </nav>
 
-    <div className="section pt-3">
       <Suspense fallback={<p>Loading</p>}>
         <Outlet context={{ posts, setPosts,
                            postKey, setPostKey, }} />
         <ScrollRestoration />
       </Suspense>
-    </div>
-    <footer className="footer has-text-centered">
-      Martin Edström
-      <br /><a href="https://github.com/meedstrom">GitHub</a>
-      <br />LinkedIn
-    </footer>
+
+      <footer className="footer has-text-centered">
+        Martin Edström
+        <br /><a href="https://github.com/meedstrom">GitHub</a>
+        <br />LinkedIn
+      </footer>
 
     </>
   )
