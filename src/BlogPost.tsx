@@ -12,9 +12,9 @@ function daysSince(then: string): string {
     const days = Math.round((unixNow - unixThen) / (1000 * 60 * 60 * 24))
     return (days === 1) ? 'yesterday'
          : (days === 0) ? 'today'
-         : (days > 730) ? `${Math.round(days/730)} years ago`
-         : (days > 60) ? `${Math.round(days/30)} months ago`
-         : (days > 30) ? 'a month ago'
+         : (days > 550) ? `${Math.round(days/365)} years ago`
+         : (days > 45) ? `${Math.round(days/30)} months ago`
+         : (days > 25) ? 'a month ago'
          : `${days} days ago`
 }
 
@@ -33,12 +33,9 @@ export function BlogPost() {
         if (posts.length === 0) {
             return <div className="section">Just a second...</div>
         } else {
-            return <div className="section">Page hidden or doesn't exist: {slug}</div>
+            return <div className="section">Page doesn't exist, or may be hidden from public view: {slug}</div>
         }
     }
-
-    const informalUpdated = daysSince(post.updated)
-    const informalCreated = daysSince(post.created)
 
     // I used to render the Org-exported HTML with just <Markup />,
     // which meant the links were <a> tags, unhandled by React Router.
@@ -71,16 +68,11 @@ export function BlogPost() {
     }
 
     // Track what pages the visitor has seen
-    /* let seen = new Set() */
-    const storedSeen: string | null = window.localStorage.getItem('seen')
-    /* if (storedSeen) {
-     *     seen = new Set(Array.from(JSON.parse(storedSeen)))
-     * } */
-    const seen = new Set<string>(storedSeen ? JSON.parse(storedSeen) : [])
+    const seen = new Set<string>(JSON.parse(window.localStorage.getItem('seen') ?? '[]'))
     if (seen.has(post.slug)) {
-        // If visitor has now seen all pages, start over from scratch
         const all = posts.filter(post => !post.tags.includes('stub'))
                          .map(post => post.slug)
+        // If visitor has now seen all non-stubs, restart the counter
         if (!all.find(slug => !seen.has(slug))) {
             seen.clear()
         }
@@ -88,6 +80,9 @@ export function BlogPost() {
         seen.add(post.slug)
     }
     window.localStorage.setItem('seen',  JSON.stringify([...seen]))
+
+    const informalUpdated = daysSince(post.updated)
+    const informalCreated = daysSince(post.created)
 
     return (
         <div className="section pt-3">

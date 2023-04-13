@@ -1,5 +1,5 @@
 /* eslint semi: ["warn", "never"] */
-import './bulmaOverride.scss'
+import './bulmaConfig.scss'
 import pako from 'pako'
 import { useCookies } from 'react-cookie'
 import { Buffer } from 'buffer'
@@ -16,7 +16,6 @@ import {
   useLocation,
   useOutletContext,
 } from 'react-router-dom'
-
 const { subtle } = globalThis.crypto
 
 export type Post = {
@@ -30,6 +29,7 @@ export type Post = {
   updated: string
 }
 
+// NOTE: Yes it's plaintext.  It doesn't need to be secret from who reads the code.
 export const hardcodedWrappingKey = await subtle.importKey(
   'raw'
   ,new Uint8Array([30,225,107,217,205,158,108,110,187,158,194,55,203,81,30,84,109,198,83,29,23,130,131,28,110,122,228,24,11,97,140,7])
@@ -92,6 +92,7 @@ export function RandomPost() {
     return <Navigate to={`/posts/${randomSlug}`} />
   }
 }
+
 
 type ContextType = {
   postKey: CryptoKey | null
@@ -166,18 +167,18 @@ export function App() {
     <>
       <nav className="navbar is-size-7-mobile" role="navigation" aria-label="main navigation">
         <div className="navbar-brand">
-          <Link className="navbar-item is-link is-narrow" to="/posts/about">About</Link>
-          <Link className="navbar-item is-link is-narrow" to="/posts">All</Link>
-          <Link className="navbar-item is-link is-narrow" to="/random">Random</Link>
+          <Link className="navbar-item is-link" to="/posts/about">About</Link>
+          <Link className="navbar-item is-link" to="/posts">All</Link>
+          <Link className="navbar-item is-link" to="/random">Random</Link>
           <div className="navbar-item is-info">{seen ? `Seen ${seen.length} of ${posts.length}` : '' }</div>
           <a role="button" className="navbar-burger" aria-label="menu" aria-expanded="false" data-target="navbarBasicExample">
-            {/* Looks hacky, but Bulma recommends this method.  This makes three burger patties. */}
+            {/* Looks hacky, but Bulma mandates this method.  This makes three burger patties. */}
             <span aria-hidden="true"></span>
             <span aria-hidden="true"></span>
             <span aria-hidden="true"></span>
           </a>
         </div>
-        <div id="navbarBasicExample" className="navbar-menu">
+        <div id="navbarBasicExample" className="navbar-menu is-active">
           <div className="navbar-end">
             <Link className="navbar-item is-link" to="/posts/blogroll">Blogroll</Link>
             <Link className="navbar-item is-link" to="/now">Now</Link>
@@ -186,7 +187,7 @@ export function App() {
         </div>
       </nav>
 
-      <Suspense fallback={<p>Loading</p>}>
+      <Suspense fallback={<p>Loading...</p>}>
         <Outlet context={{ posts, setPosts,
                            postKey, setPostKey, }} />
         <ScrollRestoration />
