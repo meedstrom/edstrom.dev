@@ -18,13 +18,14 @@ function daysSince(then: string): string {
          : `${days} days ago`
 }
 
-export function BlogPost() {
+export default function BlogPost() {
     const { posts } = usePosts()
     const slug = useParams()["*"]
     const post = posts.find((x: Post) => x.slug === slug )
 
     useEffect(() => {
-        if (typeof post !== 'undefined') {
+        if (typeof post !== 'undefined' &&
+            document.title !== post.title) {
             document.title = post.title
         }
     })
@@ -72,7 +73,8 @@ export function BlogPost() {
     if (seen.has(post.slug)) {
         const all = posts.filter(post => !post.tags.includes('stub'))
                          .map(post => post.slug)
-        // If visitor has now seen all non-stubs, restart the counter
+        // If visitor has now seen all non-stubs, restart the tracker so
+        // the Random button continues working
         if (!all.find(slug => !seen.has(slug))) {
             seen.clear()
         }
@@ -85,33 +87,31 @@ export function BlogPost() {
     const informalCreated = daysSince(post.created)
 
     return (
-        <div className="section pt-3">
-            <Suspense fallback={<p>Just a second...</p>}>
-                <article aria-labelledby='title'>
-                    <table className='table is-narrow is-bordered is-small'>
-                        <tbody>
+        <Suspense fallback={<div className="section">Just a second...</div>}>
+            <div className="section pt-3">
+                <table className='table is-narrow is-bordered is-small'>
+                    <tbody>
+                        <tr>
+                            <td>Planted</td>
+                            <td><time className='dt-published' dateTime={post.created}>{post.created} ({informalCreated})</time></td>
+                        </tr>
+                        <tr>
+                            <td>Last growth</td>
+                            <td><time className='dt-updated' dateTime={post.updated}>{post.updated} ({informalUpdated})</time></td>
+                        </tr>
+                        {(post.tags[0] !== '') ? (
                             <tr>
-                                <td>Planted</td>
-                                <td><time className='dt-published' dateTime={post.created}>{post.created} ({informalCreated})</time></td>
+                                <td>Tags</td>
+                                <td>{post.tags.join(', ')}</td>
                             </tr>
-                            <tr>
-                                <td>Last growth</td>
-                                <td><time className='dt-updated' dateTime={post.updated}>{post.updated} ({informalUpdated})</time></td>
-                            </tr>
-                            {(post.tags[0] !== '') ? (
-                                <tr>
-                                    <td>Tags</td>
-                                    <td>{post.tags.join(', ')}</td>
-                                </tr>
-                            ) : ''}
-                        </tbody>
-                    </table>
-                    <div className='content'>
-                        <Interweave content={post.content} transform={rewriteLinkTags}/>
-                    </div>
+                        ) : ''}
+                    </tbody>
+                </table>
+                <article aria-labelledby='title' className='content'>
+                    <Interweave content={post.content} transform={rewriteLinkTags}/>
                 </article>
-            </Suspense>
-        </div>
+            </div>
+        </Suspense>
     )
 }
 /*

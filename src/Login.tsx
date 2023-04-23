@@ -31,15 +31,16 @@ const { subtle } = globalThis.crypto
 export default function Login() {
     useEffect(() => { document.title = 'Login' })
     const { setPostKey } = usePostKey()
-    const setCookie = useCookies(['storedPostKey'])[1]
-    /* const [storedPostKey, setStoredPostKey]: [string, Function] = useCookie('storedPostKey') */
+    const setCookie = useCookies(['storedPostKey', 'who'])[1]
     const [password, setPassword] = useState('')
     const navigate = useNavigate()
-    const handleSubmit = async (form: React.FormEvent<HTMLFormElement>) => {
-        form.preventDefault()
+
+    const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault()
+        const maybeKey = password.trim().slice(1)
         const postKey = await subtle.importKey(
             'raw'
-            ,new Uint8Array(Buffer.from(password, 'base64'))
+            ,new Uint8Array(Buffer.from(maybeKey, 'base64'))
             ,'AES-GCM'
             ,true
             ,['encrypt', 'decrypt']
@@ -48,11 +49,11 @@ export default function Login() {
         const wrappedPostKey = await subtle.wrapKey(
             'raw'
             ,postKey
-            ,hardcodedWrappingKey
+            ,await hardcodedWrappingKey()
             ,'AES-KW'
         )
-        console.log('wrapped key: ')
-        console.log(wrappedPostKey)
+        // console.log('wrapped key: ')
+        // console.log(wrappedPostKey)
 
         const stringified = Buffer.from(wrappedPostKey).toString('base64')
 
@@ -61,46 +62,56 @@ export default function Login() {
             ,{ maxAge: 7*86400, sameSite: 'strict', secure: true }
         )
 
-        console.log(new Uint8Array(Buffer.from(stringified, 'base64')))
-        console.log('unwrapped key (to verify): ')
-        console.log(await
-            subtle.unwrapKey(
-                'raw'
-                ,new Uint8Array(Buffer.from(stringified, 'base64'))
-                ,hardcodedWrappingKey
-                ,'AES-KW'
-                ,'AES-GCM'
-                ,false
-                ,['encrypt', 'decrypt']
-        ))
+        // Yes it's a bit... crude... but I trust my friends not to elevate
+        // their access level ;-)
+        const firstChar = password.slice(0, 1)
+        await setCookie('who'
+           ,(firstChar === 'f') ? 'friend'
+            : (firstChar === 'p') ? 'partner'
+            : (firstChar === 't') ? 'therapist'
+            : 'nobody'
+           ,{ maxAge: 7*86400, sameSite: 'strict', secure: true }
+        )
 
+        /* console.log(new Uint8Array(Buffer.from(stringified, 'base64')))
+         * console.log('unwrapped key (to verify): ')
+         * console.log(await
+         *     subtle.unwrapKey(
+         *         'raw'
+         *         ,new Uint8Array(Buffer.from(stringified, 'base64'))
+         *         ,hardcodedWrappingKey
+         *         ,'AES-KW'
+         *         ,'AES-GCM'
+         *         ,false
+         *         ,['encrypt', 'decrypt']
+         * ))
+         */
         navigate('/posts')
     }
   return (
     <div className="section pt-3">
-      <h1 className="title">Please log in</h1>
-      <form onSubmit={handleSubmit}>
+      <form className="box" onSubmit={handleSubmit}>
         <div className="field">
           <label className="label">Username</label>
           <div className="control">
-            <input className="input" type="text" value="guest" readOnly />
+            <input className="input" type="text" autoFocus />
           </div>
         </div>
         <div className="field">
           <label className="label">Passphrase</label>
           <div className="control">
-            <input className="input" type="password" autoFocus onChange={x => setPassword(x.target.value)} />
+            <input className="input" type="password" onChange={x => setPassword(x.target.value)} />
           </div>
         </div>
         <div className="field">
           <div className="control">
             {/* <button className="button is-primary" type="submit" onClick={() => this.setState({className: className + " is-loading"}) }> */}
             <button className="button is-primary" type="submit">
-              I accept a cookie, log me in
+              Log me in
             </button>
           </div>
         </div>
       </form>
-      </div>
+    </div>
   )
 }
