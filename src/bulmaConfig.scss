@@ -16,48 +16,56 @@ a[href^="https://"]:after {
   content: "↗️";
 }
 
-// TODO: For certain pages (with .outline-* div classes), indent sections like
-// org-indent-mode.  Maybe with shifting background colors.
-.outline-2,
+// .outline-2,
+// .outline-3,
+// .outline-4,
+// .outline-5,
+// .outline-6 {}
+
 .outline-3,
 .outline-4,
 .outline-5,
 .outline-6 {
-  padding-left: $size-7;
-  padding-bottom: 1px; //magic
+  padding-left: 12px;
+  margin-left: 3px;
+  padding-bottom: 1px; // unexplainable magic effect
+  border-left-width: 3px;
+  border-left-color: $grey;
+  border-left-style: solid;
 }
 
-h1+.outline-2,
-.outline-text-2+.outline-3,
-.outline-text-3+.outline-4,
-.outline-text-4+.outline-5,
-.outline-text-5+.outline-6 {
-  padding-top: $size-7;
-}
+// h1+.outline-2,
+// .outline-text-2+.outline-3,
+// .outline-text-3+.outline-4,
+// .outline-text-4+.outline-5,
+// .outline-text-5+.outline-6 {
+//   padding-top: $size-7;
+// }
 
-.outline-3,
-.outline-5 {
-  background: $white;
-  @media (prefers-color-scheme: dark) {
-    background: $black;
-  }
-}
+// .outline-3,
+// .outline-5 {
 
-.outline-2,
-.outline-4,
-.outline-6 {
-  background: $white-ter;
-  @media (prefers-color-scheme: dark) {
-    background: $grey-dark;
-  }
-}
+//   background: $white;
+//   @media (prefers-color-scheme: dark) {
+//     background: $black;
+//   }
+// }
+
+// .outline-2,
+// .outline-4,
+// .outline-6 {
+//   background: $white-ter;
+//   @media (prefers-color-scheme: dark) {
+//     background: $grey-dark;
+//   }
+// }
 
 .outline-2:last-of-type,
 .outline-3:last-of-type,
 .outline-4:last-of-type,
 .outline-5:last-of-type,
 .outline-6:last-of-type {
-  padding-bottom: $size-7;
+  padding-bottom: 0;
 }
 
 
