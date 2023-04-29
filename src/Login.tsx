@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { useCookies } from 'react-cookie'
 import { useNavigate } from 'react-router-dom'
 import { Buffer } from 'buffer'
-import { usePostKey, hardcodedWrappingKey } from './App'
+import { useOutlet, hardcodedWrappingKey } from './App'
 
 const { subtle } = globalThis.crypto
 
@@ -30,13 +30,16 @@ const { subtle } = globalThis.crypto
 
 export default function Login() {
     useEffect(() => { document.title = 'Login' })
-    const { setPostKey } = usePostKey()
+    const { setPostKey } = useOutlet()
     const setCookie = useCookies(['storedPostKey', 'who'])[1]
+    const [username, setUsername] = useState('')
     const [password, setPassword] = useState('')
     const navigate = useNavigate()
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault()
+
+        // TODO: alert when the key couldn't be imported, and stay on login page
         const maybeKey = password.trim().slice(1)
         const postKey = await subtle.importKey(
             'raw'
@@ -62,16 +65,18 @@ export default function Login() {
             ,{ maxAge: 7*86400, sameSite: 'strict', secure: true }
         )
 
-        // Yes it's a bit... crude... but I trust my friends not to elevate
-        // their access level ;-)
-        const firstChar = password.slice(0, 1)
-        await setCookie('who'
-           ,(firstChar === 'f') ? 'friend'
-            : (firstChar === 'p') ? 'partner'
-            : (firstChar === 't') ? 'therapist'
-            : 'nobody'
-           ,{ maxAge: 7*86400, sameSite: 'strict', secure: true }
-        )
+        if (['therapist', 'partner', 'friend'].includes(username)) {
+            await setCookie('who', username, {
+                maxAge: 7*86400, sameSite: 'strict', secure: true
+            })
+        } else {
+            // alert a problem pls
+            await setCookie('who', 'nobody', {
+                maxAge: 7*86400, sameSite: 'strict', secure: true
+            })
+        }
+
+                /* const firstChar = password.slice(0, 1) */
 
         /* console.log(new Uint8Array(Buffer.from(stringified, 'base64')))
          * console.log('unwrapped key (to verify): ')
@@ -86,32 +91,34 @@ export default function Login() {
          *         ,['encrypt', 'decrypt']
          * ))
          */
-        navigate('/posts')
+        if (username === 'therapist') {
+            navigate('/posts/for-therapist')
+        } else navigate('/posts/home')
     }
   return (
-    <div className="section pt-3">
-      <form className="box" onSubmit={handleSubmit}>
-        <div className="field">
-          <label className="label">Username</label>
-          <div className="control">
-            <input className="input" type="text" autoFocus />
-          </div>
-        </div>
-        <div className="field">
-          <label className="label">Passphrase</label>
-          <div className="control">
-            <input className="input" type="password" onChange={x => setPassword(x.target.value)} />
-          </div>
-        </div>
-        <div className="field">
-          <div className="control">
-            {/* <button className="button is-primary" type="submit" onClick={() => this.setState({className: className + " is-loading"}) }> */}
-            <button className="button is-primary" type="submit">
-              Log me in
-            </button>
-          </div>
-        </div>
-      </form>
-    </div>
+      <div className="section pt-3">
+          <form className="box" onSubmit={handleSubmit}>
+              <div className="field">
+                  <label className="label">Username</label>
+                  <div className="control">
+                      <input className="input" type="text" autoFocus onChange={x => setUsername(x.target.value)} />
+                  </div>
+              </div>
+              <div className="field">
+                  <label className="label">Passphrase</label>
+                  <div className="control">
+                      <input className="input" type="password" onChange={x => setPassword(x.target.value)} />
+                  </div>
+              </div>
+              <div className="field">
+                  <div className="control">
+                      {/* <button className="button is-primary" type="submit" onClick={() => this.setState({className: className + " is-loading"}) }> */}
+                      <button className="button is-primary" type="submit">
+                          Log me in
+                      </button>
+                  </div>
+              </div>
+          </form>
+      </div>
   )
 }

@@ -4,6 +4,7 @@ import pako from 'pako'
 import { useCookies } from 'react-cookie'
 import { Buffer } from 'buffer'
 import { HashLink as Link } from 'react-router-hash-link'
+import { SortingState } from '@tanstack/react-table'
 import {
   Suspense,
   useState,
@@ -16,6 +17,7 @@ import {
   useLocation,
   useOutletContext,
 } from 'react-router-dom'
+
 const { subtle } = globalThis.crypto
 
 export type Post = {
@@ -24,6 +26,7 @@ export type Post = {
   content: string
   wordcount: number
   tags: string[]
+  links: number | null
   backlinks: number | null
   created: string
   updated: string
@@ -41,18 +44,14 @@ export async function hardcodedWrappingKey() {
   )
 }
 
-// Doesn't follow React paradigm, but it's for consumption by randomPost() in
-// index.tsx which cannot be a component and thus cannot use a hook. IDK the way.
-export var postsBackdoor: Post[] = []
-
 async function myDecrypt( ciphertext: Uint8Array
                         , iv: Uint8Array
                         , postKey: CryptoKey | null) {
   // TODO: get subtle.decrypt to print more detailed exceptions?
-  console.log('Decrypting...')
-  console.log(iv)
-  console.log(postKey)
-  console.log(ciphertext)
+  /* console.log('Decrypting...')
+   * console.log(iv)
+   * console.log(postKey)
+   * console.log(ciphertext) */
   if (postKey) {
     let decryptedBuffer: ArrayBuffer | null = null
     try {
@@ -81,35 +80,27 @@ async function myDecrypt( ciphertext: Uint8Array
 }
 
 type ContextType = {
-  postKey: CryptoKey | null
-  setPostKey: Function
-  posts: Post[]
-  setPosts: Function
+  postKey: CryptoKey | null,
+  setPostKey: Function,
+  posts: Post[],
+  setPosts: Function,
+  sorting: any[],
+  setSorting: any,
 }
 
-export function usePostKey() {
+export function useOutlet() {
   return useOutletContext<ContextType>()
 }
 
-export function usePosts() {
-  return useOutletContext<ContextType>()
-}
-
-export function App() {
+export function App({posts, setPosts}) {
   const location = useLocation()
   const [cookies] = useCookies(['storedPostKey', 'who'])
   const [postKey, setPostKey] = useState<CryptoKey | null>(null)
-  const [posts, setPosts] = useState<Post[]>([])
   const [publicPosts, setPublicPosts] = useState<Post[]>([])
   const [privatePosts, setPrivatePosts] = useState<Post[]>([])
-  /* const [wrappingKey, setWrappingKey] = useState<CryptoKey | null>() */
+  const [sorting, setSorting] = useState<SortingState>([])
 
   useEffect(() => {
-    /* if (!wrappingKey) {
-     *   hardcodedWrappingKey().then(x => setWrappingKey(x))
-     * }
-     */
-
     // Get postKey out of cookie, if it exists
     if (!postKey && cookies.storedPostKey) {
       hardcodedWrappingKey()
@@ -142,7 +133,6 @@ export function App() {
           const parsed: Post[] = JSON.parse(Buffer.from(pako.ungzip(x)).toString())
           setPosts(parsed)
           setPublicPosts(parsed)
-          postsBackdoor = parsed
         })
     }
     // Get the big JSON of private posts if we have the key
@@ -158,23 +148,20 @@ export function App() {
       )
         .then((x: Response) => x.arrayBuffer())
         .then((x: any) => {
-          console.log('should be a massive arraybuffer:')
-          console.log(x)
           const iv = new Uint8Array(x.slice(0, 16))
           const ciphertext = new Uint8Array(x.slice(16))
           return myDecrypt(ciphertext, iv, postKey)
         })
         .then((x: string | null) => {
           if (x) {
-            console.log(x)
             const parsed: Post[] = JSON.parse(x)
-            console.log("got the private posts!")
-            console.log(parsed)
             setPrivatePosts(parsed)
           }
         })
     }
     if (cookies.who && cookies.who !== 'nobody' && privatePosts.length !== 0) {
+      // Yes it's a bit... crude... but I trust my friends not to elevate
+      // their access level ;-)  And non-friends lack the other cookie.
       const allowedTags = new Set<string>(
         (cookies.who === 'therapist') ? ['eyes-friend', 'eyes-partner', 'eyes-therapist']
         : (cookies.who === 'partner') ? ['eyes-friend', 'eyes-partner']
@@ -182,33 +169,31 @@ export function App() {
         : []
       )
       const subset = privatePosts.filter((post: Post) => post.tags.find(tag => allowedTags.has(tag)))
-      console.log('adding the following subset:')
-      console.log(subset)
-      const newCollection = [...subset, ...publicPosts]
-      // prevent infinite render loop
+      const newCollection = [...subset, ...publicPosts].sort(
+        // sort by created, newest on top
+        (a, b) => b.created.localeCompare(a.created)
+      )
+      // prevent infinite render loop w this check
       if (posts.length !== newCollection.length) {
         setPosts(newCollection)
-        postsBackdoor = newCollection
       }
     }
   }, [postKey, cookies, posts, privatePosts, publicPosts])
 
   const toggleMenu = () => {
     // e.preventDefault()
-    // Get the target from the "data-target" attribute
     const button = document.getElementById('mainNavBtn')
+    // Get the target from the "data-target" attribute
     const buttonTarget = button ? button.dataset.target : null
     const menu = (typeof buttonTarget === 'string') ? document.getElementById(buttonTarget) : null
-    // Toggle the "is-active" class on both the "navbar-burger" and the "navbar-menu"
     if (button) button.classList.toggle('is-active')
     if (menu) menu.classList.toggle('is-active')
   }
 
-
   const seen = JSON.parse(window.localStorage.getItem('seen') ?? '[]')
   
   if (location.pathname === '/') {
-    return <Navigate to='/posts' />
+    return <Navigate to='/posts/home' />
   }
   else return (
     <>
@@ -228,8 +213,9 @@ export function App() {
           <div className="navbar-start">
           </div>
           <div className="navbar-end">
+            <Link className="navbar-item is-link" onClick={toggleMenu} to="/posts/home">Home</Link>
             <Link className="navbar-item is-link" onClick={toggleMenu} to="/posts/about">About</Link>
-            <Link className="navbar-item is-link" onClick={toggleMenu} to="/posts">All</Link>
+            <Link className="navbar-item is-link" onClick={toggleMenu} to="/posts">Grand List</Link>
             <Link className="navbar-item is-link" onClick={toggleMenu} to="/now">Now</Link>
             <Link className="navbar-item is-link" onClick={toggleMenu} to="/posts/blogroll">Blogroll</Link>
             <Link className="navbar-item is-link" onClick={toggleMenu} to="/login">Login</Link>
@@ -238,8 +224,11 @@ export function App() {
       </nav>
 
       <Suspense fallback={<p>Loading...</p>}>
-        <Outlet context={{ posts, setPosts,
-                           postKey, setPostKey, }} />
+        <Outlet context={{
+          posts, setPosts,
+          postKey, setPostKey,
+          sorting, setSorting,
+        }} />
         <ScrollRestoration />
       </Suspense>
 

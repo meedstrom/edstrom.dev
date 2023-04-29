@@ -1,17 +1,14 @@
 /* eslint semi: ["warn", "never"] */
 import React from 'react'
-import { HashLink as Link, } from 'react-router-hash-link'
-import { usePosts, Post, } from './App'
-import { useState, } from 'react'
+import { HashLink as Link } from 'react-router-hash-link'
+import { Post, useOutlet, } from './App'
 import {
   createColumnHelper,
   flexRender,
   getCoreRowModel,
   useReactTable,
-  SortingState,
   getSortedRowModel,
 } from '@tanstack/react-table'
-
 
 const columnHelper = createColumnHelper<Post>()
 const columns =
@@ -28,7 +25,7 @@ const columns =
        columnHelper.accessor('wordcount', {
         header: () => 'Words',
       }),
-       columnHelper.accessor('backlinks', {
+       columnHelper.accessor('links', {
          header: 'Links',
        }),
        /* columnHelper.accessor('tags', {
@@ -47,10 +44,12 @@ const columns =
      ]
 
 
-export function Tablev8() {
-  const { posts } = usePosts()
-  const [sorting, setSorting] = useState<SortingState>([])
+export default function Tablev8() {
+  /* const { posts } = usePosts() */
+  /* const [sorting, setSorting] = useState<SortingState>([]) */
+  const { posts, sorting, setSorting } = useOutlet()
 
+  console.log(sorting)
   const table = useReactTable({
     data: posts,
     columns: columns,
@@ -58,11 +57,8 @@ export function Tablev8() {
     getSortedRowModel: getSortedRowModel(),
     state: { sorting, },
     onSortingChange: setSorting,
-    enableSortingRemoval: true,
+    enableSortingRemoval: false,
   })
-
-  // TODO: sort by updated from the beginning
-  // table.columns[3].getToggleSortingHandler()
 
   return (
     <div className="table-container" id="big-list">
