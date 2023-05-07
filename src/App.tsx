@@ -1,31 +1,27 @@
 /* eslint semi: ["warn", "never"] */
 import './bulmaConfig.scss'
-/* import icon from './cobweb-spiderweb-icon.svg' */
 import icon from './information-mark-circle-outline-icon.svg'
 import pako from 'pako'
 import { Post } from './index'
 import { useCookies } from 'react-cookie'
 import { Buffer } from 'buffer'
 import { HashLink as Link } from 'react-router-hash-link'
-import { SortingState } from '@tanstack/react-table'
-import {
-  Suspense,
-  useState,
-  useEffect,
-} from 'react'
-import {
-  Outlet,
-  Navigate,
-  ScrollRestoration,
-  useLocation,
-  useOutletContext,
-} from 'react-router-dom'
+import { OnChangeFn,
+         SortingState, } from '@tanstack/react-table'
+import { Suspense,
+         useEffect,
+         useState, } from 'react'
+import { Navigate,
+         Outlet,
+         ScrollRestoration,
+         useLocation,
+         useOutletContext, } from 'react-router-dom'
 
 const { subtle } = globalThis.crypto
 
-// NOTE: Yes it's plaintext.  It doesn't need to be secret from who reads the
-// code.  The wrapping key is not the encryption key.
-export async function hardcodedWrappingKey() {
+// NOTE: Yes it's plaintext.  Doesn't need to be secret from who reads the
+// code; the wrapping key is not the encryption key.
+export async function getHardcodedWrappingKey() {
    return await subtle.importKey(
     'raw'
     ,new Uint8Array([30,225,107,217,205,158,108,110,187,158,194,55,203,81,30,84,109,198,83,29,23,130,131,28,110,122,228,24,11,97,140,7])
@@ -39,10 +35,6 @@ async function myDecrypt( ciphertext: Uint8Array
                         , iv: Uint8Array
                         , postKey: CryptoKey | null) {
   // TODO: get subtle.decrypt to print more detailed exceptions?
-  /* console.log('Decrypting...')
-   * console.log(iv)
-   * console.log(postKey)
-   * console.log(ciphertext) */
   if (postKey) {
     let decryptedBuffer: ArrayBuffer | null = null
     try {
@@ -50,7 +42,7 @@ async function myDecrypt( ciphertext: Uint8Array
       { name: 'AES-GCM', iv }
       , postKey
       , ciphertext
-    )
+     )
     } catch (e) {
       console.log(e)
     }
@@ -70,17 +62,17 @@ async function myDecrypt( ciphertext: Uint8Array
   }
 }
 
-type ContextType = {
+type AppContextType = {
   postKey: CryptoKey | null,
-  setPostKey: Function,
+  setPostKey(a: CryptoKey | null): void,
   posts: Post[],
-  setPosts: Function,
-  sorting: any[], // ??
-  setSorting: any, // ??
+  setPosts(a: Post[]): void,
+  sorting: SortingState,
+  setSorting: OnChangeFn<SortingState>,
 }
 
 export function useAppContext() {
-  return useOutletContext<ContextType>()
+  return useOutletContext<AppContextType>()
 }
 
 export function App({posts, setPosts}: any) {
@@ -90,11 +82,13 @@ export function App({posts, setPosts}: any) {
   const [publicPosts, setPublicPosts] = useState<Post[]>([])
   const [privatePosts, setPrivatePosts] = useState<Post[]>([])
   const [sorting, setSorting] = useState<SortingState>([])
+  const seen = JSON.parse(window.localStorage.getItem('seen') ?? '[]')
 
+  // Get postKey out of cookie, if it exists
+  // Should only run once per session
   useEffect(() => {
-    // Get postKey out of cookie, if it exists
     if (!postKey && cookies.storedPostKey) {
-      hardcodedWrappingKey()
+      getHardcodedWrappingKey()
         .then(wrappingKey => {
           return subtle.unwrapKey(
             'raw'
@@ -108,7 +102,11 @@ export function App({posts, setPosts}: any) {
         }).then((x) => setPostKey(x))
         .catch((error: Error) => console.log(error))
     }
-    // Get the big JSON of public posts
+  }, [cookies.storedPostKey])
+
+  // Get the big JSON of public posts
+  // Should only run once per session
+  useEffect(() => {
     if (posts.length === 0) {
       fetch(process.env.PUBLIC_URL + '/posts.json.gz',
             {
@@ -126,7 +124,10 @@ export function App({posts, setPosts}: any) {
           setPublicPosts(parsed)
         })
     }
-    // Get the big JSON of private posts if we have the key
+  }, [publicPosts])
+
+  // Get the big JSON of private posts once we have the key
+  useEffect(() => {
     if (privatePosts.length === 0 && postKey) {
       fetch(process.env.PUBLIC_URL + '/extraPosts.bin', {
         headers: {
@@ -148,6 +149,10 @@ export function App({posts, setPosts}: any) {
           }
         })
     }
+  }, [privatePosts, postKey])
+
+  // Reveal (some subset of) private posts if applicable
+  useEffect(() => {
     if (cookies.who && cookies.who !== 'nobody' && privatePosts.length !== 0) {
       // Yes it's a bit... crude... but I trust my friends not to elevate
       // their access level ;-)  And non-friends lack the other cookie.
@@ -159,33 +164,30 @@ export function App({posts, setPosts}: any) {
       )
       const subset = privatePosts.filter((post: Post) => post.tags.find(tag => allowedTags.has(tag)))
       const newCollection = [...subset, ...publicPosts].sort(
-        // sort by created: newest on top
+        // order most recently created on top
         (a, b) => b.created.localeCompare(a.created)
       )
       if (posts.length !== newCollection.length) {
         setPosts(newCollection)
       }
     }
-  }, [postKey, cookies, posts, privatePosts, publicPosts])
+  }, [cookies, publicPosts, privatePosts])
 
   const toggleMenu = () => {
     // e.preventDefault()
     const button = document.getElementById('mainNavBtn')
-    // Get the target from the "data-target" attribute
+    // Get the target from the "data-target" HTML attribute
     const buttonTarget = button ? button.dataset.target : null
     const menu = (typeof buttonTarget === 'string') ? document.getElementById(buttonTarget) : null
     if (button) button.classList.toggle('is-active')
     if (menu) menu.classList.toggle('is-active')
   }
-
-  const seen = JSON.parse(window.localStorage.getItem('seen') ?? '[]')
   
   if (location.pathname === '/') {
     return <Navigate to='/posts/about' />
   }
   else return (
     <>
-
       <nav className="navbar" role="navigation" aria-label="main navigation">
         <div className="navbar-brand">
           <Link className="navbar-item is-link" to="/posts/about"><img src={icon} alt="Go to the About-page" width="24px" /></Link>
@@ -228,7 +230,6 @@ export function App({posts, setPosts}: any) {
         <br /><a href="https://github.com/meedstrom">GitHub</a>
         {/* <br />LinkedIn */}
       </footer>
-
     </>
   )
 }

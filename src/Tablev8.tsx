@@ -13,42 +13,37 @@ import {
 
 const columnHelper = createColumnHelper<Post>()
 const columns =
-     [
-       columnHelper.accessor('title', {
-         header: 'Note',
-         cell: props => (
-           <Link className={props.row.original.tags.includes('stub') ? 'stub-link' : 'working-link'}
-                 to={props.row.original.slug}>
-             {props.getValue()}
-           </Link>
-         ),
-       }),
-       columnHelper.accessor('wordcount', {
-        header: () => 'Words',
-      }),
-       columnHelper.accessor('links', {
-         header: 'Links',
-       }),
-       /* columnHelper.accessor('tags', {
-        *   header: () => 'Tags',
-        *   cell: info => <i>{info.getValue().join(',')}</i>,
-        * }), */
-      columnHelper.accessor('created', {
-        header: () => 'Created',
-        // non-breaking hyphens
-        cell: info => <time className='dt-published'>{(info.getValue() ?? '').replaceAll('-', '‑') }</time>,
-      }),
-       columnHelper.accessor('updated', {
-         header: 'Updated',
-         cell: info => <time className='dt-published'>{(info.getValue() ?? '').replaceAll('-', '‑')}</time>,
-       }),
-     ]
+    [
+        columnHelper.accessor('title', {
+            header: 'Note',
+            cell: props => (
+                <Link className={props.row.original.tags.includes('stub') ? 'stub-link' : 'working-link'}
+                      to={props.row.original.slug}>
+                    {props.getValue()}
+                </Link>
+            ),
+        }),
+        columnHelper.accessor('wordcount', {
+            header: () => 'Words',
+        }),
+        columnHelper.accessor('links', {
+            header: 'Links',
+        }),
+        columnHelper.accessor('created', {
+            header: () => 'Created',
+            // non-breaking hyphens
+            cell: info => <time className='dt-published'>{(info.getValue() ?? '').replaceAll('-', '‑') }</time>,
+        }),
+        columnHelper.accessor('updated', {
+            header: 'Updated',
+            // non-breaking hyphens
+            cell: info => <time className='dt-updated'>{(info.getValue() ?? '').replaceAll('-', '‑')}</time>,
+        }),
+    ]
 
 
 export default function Tablev8() {
-  const { posts, sorting, setSorting, } = useAppContext()
-
-  console.log(sorting)
+    const { posts, sorting, setSorting, } = useAppContext()
   const table = useReactTable({
     data: posts,
     columns: columns,

@@ -4,11 +4,10 @@ import React, { useState, useEffect } from 'react'
 import { useCookies } from 'react-cookie'
 import { useNavigate } from 'react-router-dom'
 import { Buffer } from 'buffer'
-import { useAppContext, hardcodedWrappingKey } from './App'
-
+import { useAppContext, getHardcodedWrappingKey } from './App'
 const { subtle } = globalThis.crypto
 
-// Run this bit locally on your computer.  Then paste the result in hardcodedWrappingKey definition.
+// Run this bit locally on your computer.  Then paste the result in getHardcodedWrappingKey definition.
 /*
    window.crypto.subtle.generateKey(
    { name: 'AES-KW', length: 256 }
@@ -52,7 +51,7 @@ export default function Login() {
         const wrappedPostKey = await subtle.wrapKey(
             'raw'
             ,postKey
-            ,await hardcodedWrappingKey()
+            ,await getHardcodedWrappingKey()
             ,'AES-KW'
         )
         // console.log('wrapped key: ')
@@ -84,7 +83,7 @@ export default function Login() {
          *     subtle.unwrapKey(
          *         'raw'
          *         ,new Uint8Array(Buffer.from(stringified, 'base64'))
-         *         ,hardcodedWrappingKey
+         *         ,getHardcodedWrappingKey
          *         ,'AES-KW'
          *         ,'AES-GCM'
          *         ,false
