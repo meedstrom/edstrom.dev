@@ -1,6 +1,9 @@
 /* eslint semi: ["warn", "never"] */
 import './bulmaConfig.scss'
+/* import icon from './cobweb-spiderweb-icon.svg' */
+import icon from './information-mark-circle-outline-icon.svg'
 import pako from 'pako'
+import { Post } from './index'
 import { useCookies } from 'react-cookie'
 import { Buffer } from 'buffer'
 import { HashLink as Link } from 'react-router-hash-link'
@@ -19,18 +22,6 @@ import {
 } from 'react-router-dom'
 
 const { subtle } = globalThis.crypto
-
-export type Post = {
-  title: string
-  slug: string
-  content: string
-  wordcount: number
-  tags: string[]
-  links: number | null
-  backlinks: number | null
-  created: string
-  updated: string
-}
 
 // NOTE: Yes it's plaintext.  It doesn't need to be secret from who reads the
 // code.  The wrapping key is not the encryption key.
@@ -84,15 +75,15 @@ type ContextType = {
   setPostKey: Function,
   posts: Post[],
   setPosts: Function,
-  sorting: any[],
-  setSorting: any,
+  sorting: any[], // ??
+  setSorting: any, // ??
 }
 
-export function useOutlet() {
+export function useAppContext() {
   return useOutletContext<ContextType>()
 }
 
-export function App({posts, setPosts}) {
+export function App({posts, setPosts}: any) {
   const location = useLocation()
   const [cookies] = useCookies(['storedPostKey', 'who'])
   const [postKey, setPostKey] = useState<CryptoKey | null>(null)
@@ -113,8 +104,8 @@ export function App({posts, setPosts}) {
             ,'AES-GCM'
             ,false
             ,['encrypt', 'decrypt']
-
-        )}).then((x) => setPostKey(x))
+          )
+        }).then((x) => setPostKey(x))
         .catch((error: Error) => console.log(error))
     }
     // Get the big JSON of public posts
@@ -137,15 +128,13 @@ export function App({posts, setPosts}) {
     }
     // Get the big JSON of private posts if we have the key
     if (privatePosts.length === 0 && postKey) {
-      fetch(process.env.PUBLIC_URL + '/extraPosts.bin',
-            {
-              headers: {
-                "Accept": 'application/octet-stream',
-                "Cache-Control": 'max-age=8640, private',
-              },
-              cache: "default",
-            }
-      )
+      fetch(process.env.PUBLIC_URL + '/extraPosts.bin', {
+        headers: {
+          "Accept": 'application/octet-stream',
+          "Cache-Control": 'max-age=8640, private',
+        },
+        cache: "default",
+      })
         .then((x: Response) => x.arrayBuffer())
         .then((x: any) => {
           const iv = new Uint8Array(x.slice(0, 16))
@@ -170,10 +159,9 @@ export function App({posts, setPosts}) {
       )
       const subset = privatePosts.filter((post: Post) => post.tags.find(tag => allowedTags.has(tag)))
       const newCollection = [...subset, ...publicPosts].sort(
-        // sort by created, newest on top
+        // sort by created: newest on top
         (a, b) => b.created.localeCompare(a.created)
       )
-      // prevent infinite render loop w this check
       if (posts.length !== newCollection.length) {
         setPosts(newCollection)
       }
@@ -193,13 +181,15 @@ export function App({posts, setPosts}) {
   const seen = JSON.parse(window.localStorage.getItem('seen') ?? '[]')
   
   if (location.pathname === '/') {
-    return <Navigate to='/posts/home' />
+    return <Navigate to='/posts/about' />
   }
   else return (
     <>
 
       <nav className="navbar" role="navigation" aria-label="main navigation">
         <div className="navbar-brand">
+          <Link className="navbar-item is-link" to="/posts/about"><img src={icon} alt="Go to the About-page" width="24px" /></Link>
+          {/* <Link className="navbar-item is-link" to="/posts/about">️🛟</Link> */}
           <Link className="navbar-item is-link" to="/posts">{`Seen ${seen.length} of ${posts.length}`}</Link>
           <Link className="navbar-item is-link" to="/random">Random</Link>
           <a id="mainNavBtn" onClick={toggleMenu} role="button" className="navbar-burger" aria-label="menu" aria-expanded="false" data-target="mainNav">
@@ -213,10 +203,11 @@ export function App({posts, setPosts}) {
           <div className="navbar-start">
           </div>
           <div className="navbar-end">
-            <Link className="navbar-item is-link" onClick={toggleMenu} to="/posts/home">Home</Link>
-            <Link className="navbar-item is-link" onClick={toggleMenu} to="/posts/about">About</Link>
+            <Link className="navbar-item is-link" onClick={toggleMenu} to="/posts/home">Nexus</Link>
             <Link className="navbar-item is-link" onClick={toggleMenu} to="/posts">Grand List</Link>
-            <Link className="navbar-item is-link" onClick={toggleMenu} to="/now">Now</Link>
+            <Link className="navbar-item is-link" onClick={toggleMenu} to="/random">Random</Link>
+            {/* <Link className="navbar-item is-link" onClick={toggleMenu} to="/now">Now</Link> */}
+            <Link className="navbar-item is-link" onClick={toggleMenu} to="/posts/about">About</Link>
             <Link className="navbar-item is-link" onClick={toggleMenu} to="/posts/blogroll">Blogroll</Link>
             <Link className="navbar-item is-link" onClick={toggleMenu} to="/login">Login</Link>
           </div>

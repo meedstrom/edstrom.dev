@@ -24,10 +24,12 @@ export type Post = {
   updated: string,
 }
 
-// Lift the posts-state up to the level of wrapping even the router.  This
-// enables the /random page, and lets the browser's back-button behave
-// predictably after you've been redirected from /random.
-function MyRouterComponent () {
+// Had to lift the posts-state up to the level of wrapping even the router.
+// This enables the /random page, and lets the browser's back-button behave
+// predictably after the /random page has redirected you, thanks to redirect().
+// That would not happen if the /random page was a child that just returned a
+// <Navigate> component.
+function CustomRouterProvider () {
   const [posts, setPosts]  = useState<Post[]>([])
 
   const randomPost = () => {
@@ -39,7 +41,7 @@ function MyRouterComponent () {
       const seen = new Set<string>(JSON.parse(window.localStorage.getItem('seen') ?? '[]'))
       let nonStubs = new Set<string>(posts.filter(x => !x.tags.includes('stub'))
                                           .map(x => x.slug))
-      // NOTE: set-difference is coming to JS, check if it's happened yet  https://github.com/tc39/proposal-set-methods
+      // NOTE: set-difference is coming to JS https://github.com/tc39/proposal-set-methods
       for (const item of seen) {
         nonStubs.delete(item)
       }
@@ -48,6 +50,7 @@ function MyRouterComponent () {
       return redirect(`/posts/${randomSlug}`)
     }
   }
+
   const myRouter = createBrowserRouter(
     createRoutesFromElements(
       <>
@@ -63,8 +66,10 @@ function MyRouterComponent () {
       </>
     )
   )
+
   return <RouterProvider router={myRouter} />
 }
+
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
@@ -72,7 +77,7 @@ const root = ReactDOM.createRoot(
 root.render(
   <React.StrictMode>
     <CookiesProvider>
-      <MyRouterComponent />
+      <CustomRouterProvider />
     </CookiesProvider>
   </React.StrictMode>
 )

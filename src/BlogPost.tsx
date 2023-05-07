@@ -1,7 +1,8 @@
 /* eslint semi: ["warn", "never"] */
 import React from 'react'
 import { Interweave, Node, } from 'interweave'
-import { Post, useOutlet, } from './App'
+import { Post } from './index'
+import { useAppContext } from './App'
 import { useEffect, Suspense, } from 'react'
 import { HashLink as Link } from 'react-router-hash-link'
 import { useParams } from 'react-router-dom'
@@ -19,7 +20,7 @@ function daysSince(then: string): string {
 }
 
 export default function BlogPost() {
-    const { posts } = useOutlet()
+    const { posts } = useAppContext()
     const slug = useParams()["*"]
     const thisPost = posts.find((x: Post) => x.slug === slug )
 

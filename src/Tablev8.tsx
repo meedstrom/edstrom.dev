@@ -1,7 +1,8 @@
 /* eslint semi: ["warn", "never"] */
 import React from 'react'
 import { HashLink as Link } from 'react-router-hash-link'
-import { Post, useOutlet, } from './App'
+import { Post } from './index'
+import { useAppContext } from './App'
 import {
   createColumnHelper,
   flexRender,
@@ -45,9 +46,7 @@ const columns =
 
 
 export default function Tablev8() {
-  /* const { posts } = usePosts() */
-  /* const [sorting, setSorting] = useState<SortingState>([]) */
-  const { posts, sorting, setSorting } = useOutlet()
+  const { posts, sorting, setSorting, } = useAppContext()
 
   console.log(sorting)
   const table = useReactTable({

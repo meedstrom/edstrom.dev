@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { useCookies } from 'react-cookie'
 import { useNavigate } from 'react-router-dom'
 import { Buffer } from 'buffer'
-import { useOutlet, hardcodedWrappingKey } from './App'
+import { useAppContext, hardcodedWrappingKey } from './App'
 
 const { subtle } = globalThis.crypto
 
@@ -30,7 +30,7 @@ const { subtle } = globalThis.crypto
 
 export default function Login() {
     useEffect(() => { document.title = 'Login' })
-    const { setPostKey } = useOutlet()
+    const { setPostKey } = useAppContext()
     const setCookie = useCookies(['storedPostKey', 'who'])[1]
     const [username, setUsername] = useState('')
     const [password, setPassword] = useState('')
