@@ -12,6 +12,7 @@ $black: #000;
 
 @import "~bulma/bulma.sass";
 @import "~bulma-prefers-dark/bulma-prefers-dark.sass";
+@import "~react-toastify/scss/main.scss";
 
 // Indicate external links
 a[href^="http://"]:after,

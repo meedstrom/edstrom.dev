@@ -6,6 +6,7 @@ import { Post } from './index'
 import { useCookies } from 'react-cookie'
 import { Buffer } from 'buffer'
 import { HashLink as Link } from 'react-router-hash-link'
+import { ToastContainer } from 'react-toastify'
 import { OnChangeFn,
          SortingState, } from '@tanstack/react-table'
 import { Suspense,
@@ -205,16 +206,15 @@ export function App({posts, setPosts}: any) {
           <div className="navbar-start">
           </div>
           <div className="navbar-end">
-            <Link className="navbar-item is-link" onClick={toggleMenu} to="/posts/home">Nexus</Link>
+            <Link className="navbar-item is-link" onClick={toggleMenu} to="/posts/nexus">Nexus of entry-points</Link>
             <Link className="navbar-item is-link" onClick={toggleMenu} to="/posts">Grand List</Link>
-            <Link className="navbar-item is-link" onClick={toggleMenu} to="/random">Random</Link>
-            {/* <Link className="navbar-item is-link" onClick={toggleMenu} to="/now">Now</Link> */}
-            <Link className="navbar-item is-link" onClick={toggleMenu} to="/posts/about">About</Link>
             <Link className="navbar-item is-link" onClick={toggleMenu} to="/posts/blogroll">Blogroll</Link>
             <Link className="navbar-item is-link" onClick={toggleMenu} to="/login">Login</Link>
           </div>
         </div>
       </nav>
+
+      <ToastContainer hideProgressBar={true} />
 
       <Suspense fallback={<p>Loading...</p>}>
         <Outlet context={{

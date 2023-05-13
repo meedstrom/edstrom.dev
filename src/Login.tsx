@@ -1,10 +1,10 @@
 /* eslint semi: ["warn", "never"] */
-// import './App.css'
 import React, { useState, useEffect } from 'react'
 import { useCookies } from 'react-cookie'
 import { useNavigate } from 'react-router-dom'
 import { Buffer } from 'buffer'
 import { useAppContext, getHardcodedWrappingKey } from './App'
+import { toast } from 'react-toastify'
 const { subtle } = globalThis.crypto
 
 // Run this bit locally on your computer.  Then paste the result in getHardcodedWrappingKey definition.
