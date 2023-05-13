@@ -56,14 +56,15 @@ export default function Login() {
       if (postKey) {
         toast('Login success!', { type: 'success' })
       } else {
-        toast('Passphrase incorrect (or something broke)', { type: 'error' })
+        toast('Passphrase wrong (or something broke)', { type: 'error' })
         return
       }
     } else {
-      toast('Unknown username', { type: 'warning' })
+      toast('Unknown user', { type: 'error' })
       await setCookie('who', 'nobody', {
         maxAge: 7*86400, sameSite: 'strict', secure: true,
       })
+      return
     }
 
     setPostKey(postKey)
@@ -91,7 +92,7 @@ export default function Login() {
     <div className="section pt-3">
       <form className="box" onSubmit={handleSubmit}>
         <div className="field">
-          <label className="label">Username</label>
+          <label className="label">User</label>
           <div className="control">
             <input className="input" type="text" autoFocus onChange={x => setUsername(x.target.value)} />
           </div>

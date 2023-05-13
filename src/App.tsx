@@ -154,6 +154,9 @@ export function App({posts, setPosts}: any) {
 
   // Reveal (some subset of) private posts if applicable
   useEffect(() => {
+    if (cookies.who && cookies.who === 'nobody' && posts.length !== publicPosts.length) {
+      setPosts(publicPosts)
+    }
     if (cookies.who && cookies.who !== 'nobody' && privatePosts.length !== 0) {
       // Yes it's a bit... crude... but I trust my friends not to elevate
       // their access level ;-)  And non-friends lack the other cookie.
