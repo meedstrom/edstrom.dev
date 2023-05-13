@@ -23,7 +23,7 @@ const { subtle } = globalThis.crypto
 // NOTE: Yes it's plaintext.  Doesn't need to be secret from who reads the
 // code; the wrapping key is not the encryption key.
 export async function getHardcodedWrappingKey() {
-   return await subtle.importKey(
+  return await subtle.importKey(
     'raw'
     ,new Uint8Array([30,225,107,217,205,158,108,110,187,158,194,55,203,81,30,84,109,198,83,29,23,130,131,28,110,122,228,24,11,97,140,7])
     ,'AES-KW'
@@ -39,11 +39,11 @@ async function myDecrypt( ciphertext: Uint8Array
   if (postKey) {
     let decryptedBuffer: ArrayBuffer | null = null
     try {
-     decryptedBuffer = await subtle.decrypt(
-      { name: 'AES-GCM', iv }
-      , postKey
-      , ciphertext
-     )
+      decryptedBuffer = await subtle.decrypt(
+        { name: 'AES-GCM', iv }
+        , postKey
+        , ciphertext
+      )
     } catch (e) {
       console.log(e)
     }
@@ -192,7 +192,6 @@ export function App({posts, setPosts}: any) {
       <nav className="navbar" role="navigation" aria-label="main navigation">
         <div className="navbar-brand">
           <Link className="navbar-item is-link" to="/posts/about"><img src={icon} alt="Go to the About-page" width="24px" /></Link>
-          {/* <Link className="navbar-item is-link" to="/posts/about">️🛟</Link> */}
           <Link className="navbar-item is-link" to="/posts">{`Seen ${seen.length} of ${posts.length}`}</Link>
           <Link className="navbar-item is-link" to="/random">Random</Link>
           <a id="mainNavBtn" onClick={toggleMenu} role="button" className="navbar-burger" aria-label="menu" aria-expanded="false" data-target="mainNav">

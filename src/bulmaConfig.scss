@@ -1,7 +1,5 @@
 @charset "utf-8";
 
-// OVERRIDES
-
 $body-line-height: 1.3;
 
 // Make "$black" true black because of OLED screens
@@ -20,7 +18,7 @@ a[href^="https://"]:after {
   content: "↗️";
 }
 
-// minor fix bc bulma .content doesnt cope well w divs
+// minor fix, bc bulma .content doesnt cope well w divs
 .outline-2,
 .outline-3:first-child,
 .outline-4:first-child,
@@ -84,10 +82,11 @@ ul {
   margin-bottom: $size-6;
 }
 
-// TODO: in .logseq spans, destyle headings.
+// TODO: in .logseq divs, destyle headings.
 // Though this wouldn't really be blind-readable compared to just replacing the
 // heading tags for <p> tags.  IDK how the blind would best read lists with deep
-// nesting, and how to explain the nesting thru aria.
+// nesting, and how to explain the nesting thru aria.  2023-05-12: ok, in lieu
+// of proper ul/li elements, we can use role="list" and role="listitem".
 .logseq h2,h3,h4,h5,h6 {
   font-size: $size-normal;
   font-weight: $weight-normal;
@@ -98,7 +97,7 @@ ul {
 
 // Emacs exports src colors according to the color theme I had active, and I
 // always use a dark theme.  So mandate that all src blocks have dark background
-// regardless of prefers-color-scheme, then it'll look fine.
+// (regardless of browser prefers-color-scheme), then it'll look fine.
 pre.src {
   background: $grey-darker;
   color: $white-ter;

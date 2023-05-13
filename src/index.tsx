@@ -1,16 +1,16 @@
 /* eslint semi: ["warn", "never"] */
 import React, { useState } from 'react'
 import ReactDOM from 'react-dom/client'
-import { CookiesProvider } from 'react-cookie'
-import { App } from './App'
 import Tablev8 from './Tablev8'
 import BlogPost from './BlogPost'
 import Login from './Login'
-import { Route
-       , createBrowserRouter
-       , createRoutesFromElements
-       , redirect
-       , RouterProvider } from 'react-router-dom'
+import { CookiesProvider } from 'react-cookie'
+import { App } from './App'
+import { Route,
+         RouterProvider,
+         createBrowserRouter,
+         createRoutesFromElements,
+         redirect, } from 'react-router-dom'
 
 export type Post = {
   title: string,
@@ -24,11 +24,10 @@ export type Post = {
   updated: string,
 }
 
-// Had to lift the posts-state up to the level of wrapping even the router.
-// This enables the /random page, and lets the browser's back-button behave
-// predictably after the /random page has redirected you, thanks to redirect().
-// That would not happen if the /random page was a child that just returned a
-// <Navigate> component.
+// Had to lift the posts-state all the way up this level. This lets the
+// browser's back-button behave predictably after the /random page has redirected
+// you, thanks to redirect(). That would not happen if the /random page was a
+// child that just returned a <Navigate> component.
 function CustomRouterProvider () {
   const [posts, setPosts]  = useState<Post[]>([])
 

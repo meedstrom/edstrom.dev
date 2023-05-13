@@ -4,7 +4,7 @@ FROM node:19-alpine as build
 RUN apk --no-cache -U upgrade
 WORKDIR /app
 COPY . .
-RUN npm install
+RUN npm install --quiet
 # RUN npm audit fix --only=prod || echo
 # RUN npm audit fix --only=prod --force
 RUN npx craco build

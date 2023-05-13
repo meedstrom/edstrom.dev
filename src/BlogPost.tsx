@@ -106,15 +106,16 @@ export default function BlogPost() {
     return (
         <Suspense fallback={<div className="section">Just a second...</div>}>
             <div className="section pt-3">
-                <table className='table is-narrow is-bordered is-small'>
+
+                <table className="table is-narrow is-bordered is-small">
                     <tbody>
                         <tr>
                             <td>Planted</td>
-                            <td><time className='dt-published' dateTime={thisPost.created}>{thisPost.created} ({informalCreated})</time></td>
+                            <td><time className="dt-published" dateTime={thisPost.created}>{thisPost.created} ({informalCreated})</time></td>
                         </tr>
                         <tr>
                             <td>Last growth</td>
-                            <td><time className='dt-updated' dateTime={thisPost.updated}>{thisPost.updated} ({informalUpdated})</time></td>
+                            <td><time className="dt-updated" dateTime={thisPost.updated}>{thisPost.updated} ({informalUpdated})</time></td>
                         </tr>
                         {(thisPost.tags[0] !== '') ? (
                             <tr>
@@ -124,17 +125,18 @@ export default function BlogPost() {
                         ) : ''}
                     </tbody>
                 </table>
+                
                 {isDaily ? (
-                <div className="columns is-mobile">
-                    <div className="column is-narrow">
-                        {prevDaily ? <Link to={prevDaily}>← {prevDaily}</Link> : 'No previous entry'}
+                    <div className="columns is-mobile">
+                        <div className="column is-narrow">
+                            {prevDaily ? <Link to={prevDaily}>← {prevDaily}</Link> : 'No previous entry'}
+                        </div>
+                        <div className="column is-narrow">
+                            {nextDaily ? <Link to={nextDaily}>{nextDaily} →</Link> : 'No next entry'}
+                        </div>
                     </div>
-                    <div className="column is-narrow">
-                        {nextDaily ? <Link to={nextDaily}>{nextDaily} →</Link> : 'No next entry'}
-                    </div>
-                </div>
                 ) : ''}
-                <article aria-labelledby='title' className='content'>
+                <article aria-labelledby="title" className="content">
                     <Interweave content={thisPost.content} transform={rewriteLinkTags}/>
                 </article>
             </div>

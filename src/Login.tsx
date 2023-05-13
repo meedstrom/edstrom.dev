@@ -28,96 +28,89 @@ const { subtle } = globalThis.crypto
  * ).then(x => console.log(Array.apply([], new Uint8Array(x)).join(','))) */
 
 export default function Login() {
-    useEffect(() => { document.title = 'Login' })
-    const { setPostKey } = useAppContext()
-    const setCookie = useCookies(['storedPostKey', 'who'])[1]
-    const [username, setUsername] = useState('')
-    const [password, setPassword] = useState('')
-    const navigate = useNavigate()
+  useEffect(() => { document.title = 'Login' })
+  const { setPostKey } = useAppContext()
+  const setCookie = useCookies(['storedPostKey', 'who'])[1]
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
+  const navigate = useNavigate()
 
-    const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-        event.preventDefault()
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
 
-        // TODO: alert when the key couldn't be imported, and stay on login page
-        const maybeKey = password.trim().slice(1)
-        const postKey = await subtle.importKey(
-            'raw'
-            ,new Uint8Array(Buffer.from(maybeKey, 'base64'))
-            ,'AES-GCM'
-            ,true
-            ,['encrypt', 'decrypt']
-        )
-        setPostKey(postKey)
-        const wrappedPostKey = await subtle.wrapKey(
-            'raw'
-            ,postKey
-            ,await getHardcodedWrappingKey()
-            ,'AES-KW'
-        )
-        // console.log('wrapped key: ')
-        // console.log(wrappedPostKey)
+    // TODO: alert when the key couldn't be imported, and stay on login page
+    const maybeKey = password.trim().slice(1)
 
-        const stringified = Buffer.from(wrappedPostKey).toString('base64')
+    const postKey = await subtle.importKey(
+      'raw'
+      ,new Uint8Array(Buffer.from(maybeKey, 'base64'))
+      ,'AES-GCM'
+      ,true
+      ,['encrypt', 'decrypt']
+    ).catch(_ => null)
 
-        await setCookie('storedPostKey'
-            ,stringified
-            ,{ maxAge: 7*86400, sameSite: 'strict', secure: true }
-        )
-
-        if (['therapist', 'partner', 'friend'].includes(username)) {
-            await setCookie('who', username, {
-                maxAge: 7*86400, sameSite: 'strict', secure: true
-            })
-        } else {
-            // alert a problem pls
-            await setCookie('who', 'nobody', {
-                maxAge: 7*86400, sameSite: 'strict', secure: true
-            })
-        }
-
-                /* const firstChar = password.slice(0, 1) */
-
-        /* console.log(new Uint8Array(Buffer.from(stringified, 'base64')))
-         * console.log('unwrapped key (to verify): ')
-         * console.log(await
-         *     subtle.unwrapKey(
-         *         'raw'
-         *         ,new Uint8Array(Buffer.from(stringified, 'base64'))
-         *         ,getHardcodedWrappingKey
-         *         ,'AES-KW'
-         *         ,'AES-GCM'
-         *         ,false
-         *         ,['encrypt', 'decrypt']
-         * ))
-         */
-        if (username === 'therapist') {
-            navigate('/posts/for-therapist')
-        } else navigate('/posts/home')
+    if (['therapist', 'partner', 'friend'].includes(username)) {
+      await setCookie('who', username, {
+        maxAge: 7*86400, sameSite: 'strict', secure: true,
+      })
+      if (postKey) {
+        toast('Login success!', { type: 'success' })
+      } else {
+        toast('Passphrase incorrect (or something broke)', { type: 'error' })
+        return
+      }
+    } else {
+      toast('Unknown username', { type: 'warning' })
+      await setCookie('who', 'nobody', {
+        maxAge: 7*86400, sameSite: 'strict', secure: true,
+      })
     }
+
+    setPostKey(postKey)
+    const wrappedPostKey = await subtle.wrapKey(
+      'raw'
+      ,postKey
+      ,await getHardcodedWrappingKey()
+      ,'AES-KW'
+    )
+
+    const stringified = Buffer.from(wrappedPostKey).toString('base64')
+
+    await setCookie('storedPostKey', stringified, {
+      maxAge: 7*86400, sameSite: 'strict', secure: true
+    })
+
+    if (username === 'therapist') {
+      navigate('/posts/for-therapist')
+    } else {
+      navigate('/posts/nexus')
+    }
+
+  }
   return (
-      <div className="section pt-3">
-          <form className="box" onSubmit={handleSubmit}>
-              <div className="field">
-                  <label className="label">Username</label>
-                  <div className="control">
-                      <input className="input" type="text" autoFocus onChange={x => setUsername(x.target.value)} />
-                  </div>
-              </div>
-              <div className="field">
-                  <label className="label">Passphrase</label>
-                  <div className="control">
-                      <input className="input" type="password" onChange={x => setPassword(x.target.value)} />
-                  </div>
-              </div>
-              <div className="field">
-                  <div className="control">
-                      {/* <button className="button is-primary" type="submit" onClick={() => this.setState({className: className + " is-loading"}) }> */}
-                      <button className="button is-primary" type="submit">
-                          Log me in
-                      </button>
-                  </div>
-              </div>
-          </form>
-      </div>
+    <div className="section pt-3">
+      <form className="box" onSubmit={handleSubmit}>
+        <div className="field">
+          <label className="label">Username</label>
+          <div className="control">
+            <input className="input" type="text" autoFocus onChange={x => setUsername(x.target.value)} />
+          </div>
+        </div>
+        <div className="field">
+          <label className="label">Passphrase</label>
+          <div className="control">
+            <input className="input" type="password" onChange={x => setPassword(x.target.value)} />
+          </div>
+        </div>
+        <div className="field">
+          <div className="control">
+            {/* <button className="button is-primary" type="submit" onClick={() => this.setState({className: className + " is-loading"}) }> */}
+            <button className="button is-primary" type="submit">
+              Log me in
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
   )
 }
