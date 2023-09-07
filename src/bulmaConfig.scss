@@ -122,7 +122,13 @@ pre.src {
   }
 }
 
-// mo real estate on phone
+#about-button {
+  @media (prefers-color-scheme: dark) {
+    filter: invert(1);
+  }
+}
+
+// more real estate on phone
 @media only screen and (max-width: $tablet) {
   article,
   .section {

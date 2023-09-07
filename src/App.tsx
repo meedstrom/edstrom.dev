@@ -1,4 +1,7 @@
 /* eslint semi: ["warn", "never"] */
+
+// TODO: give the table more left-right margins on really big screens
+
 import './bulmaConfig.scss'
 import icon from './information-mark-circle-outline-icon.svg'
 import pako from 'pako'
@@ -194,11 +197,11 @@ export function App({posts, setPosts}: any) {
     <>
       <nav className="navbar" role="navigation" aria-label="main navigation">
         <div className="navbar-brand">
-          <Link className="navbar-item is-link" to="/posts/about"><img src={icon} alt="Go to the About-page" width="24px" /></Link>
+          <Link className="navbar-item is-link" to="/posts/about"><img id="about-button" src={icon} alt="Go to the About-page" width="24px" /></Link>
           <Link className="navbar-item is-link" to="/posts">{`Seen ${seen.length} of ${posts.length}`}</Link>
           <Link className="navbar-item is-link" to="/random">Random</Link>
           <a id="mainNavBtn" onClick={toggleMenu} role="button" className="navbar-burger" aria-label="menu" aria-expanded="false" data-target="mainNav">
-            {/* Looks hacky, but Bulma mandates this method.  This makes three burger patties. */}
+            {/* Looks hacky, but Bulma mandates this method.  Makes three "burger patties". */}
             <span aria-hidden="true"></span>
             <span aria-hidden="true"></span>
             <span aria-hidden="true"></span>
