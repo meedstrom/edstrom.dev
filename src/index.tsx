@@ -1,7 +1,7 @@
 /* eslint semi: ["warn", "never"] */
 import React, { useState } from 'react'
 import ReactDOM from 'react-dom/client'
-import Tablev8 from './Tablev8'
+import BigList from './BigList'
 import BlogPost from './BlogPost'
 import Login from './Login'
 import { CookiesProvider } from 'react-cookie'
@@ -58,7 +58,7 @@ function CustomRouterProvider () {
       <>
         <Route path="/" element={<App posts={posts} setPosts={setPosts} />} >
           <Route path="posts/*" element={<BlogPost />} />
-          <Route path="posts" element={<Tablev8 />} />
+          <Route path="posts" element={<BigList />} />
           <Route path="login" element={<Login />} />
           <Route path="random" loader={randomPost} />
           <Route path="now" loader={() => { return redirect('/posts/Dc23BV3/portal-on-my-mind') }} />

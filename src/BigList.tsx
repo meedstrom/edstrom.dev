@@ -42,7 +42,7 @@ const columns =
   ]
 
 
-export default function Tablev8() {
+export default function BigList() {
   const { posts, sorting, setSorting, } = useAppContext()
   const table = useReactTable({
     data: posts,
