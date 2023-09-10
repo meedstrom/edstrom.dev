@@ -1,10 +1,12 @@
-FROM node:19-alpine
+FROM node:20-alpine
 WORKDIR /app
 
 COPY package.json ./
 COPY package-lock.json ./
 
-# The VOLUME instruction does not support specifying a host-dir parameter (unlike in docker-compose.yml). You must specify the mountpoint when you create or run the container.
+# The VOLUME instruction does not support specifying a host-dir parameter
+# (unlike in docker-compose.yml). You must specify the mountpoint when you
+# create or run the container.
 VOLUME /app
 VOLUME /app/node_modules
 
@@ -21,3 +23,4 @@ EXPOSE 3000
 # NOTE: As specified in package.json, `npm start` calls `react-scripts start`.
 # RUN npm run build
 CMD ["npm", "start"]
+#CMD ["npx", "craco", "start"]

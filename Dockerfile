@@ -1,6 +1,6 @@
 # ------------------ build environment -----------------------------------
 
-FROM node:19-alpine as build
+FROM node:20-alpine as build
 RUN apk --no-cache -U upgrade
 WORKDIR /app
 COPY . .
