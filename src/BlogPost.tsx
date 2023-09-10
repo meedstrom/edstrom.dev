@@ -19,10 +19,19 @@ function daysSince(then: string): string {
          : `${days} days ago`
 }
 
-export default function BlogPost() {
+export default function BlogPost({ daily }: any) {
     const { posts } = useAppContext()
-    const slug = useParams()["*"]
-    const thisPost = posts.find((x: Post) => x.slug === slug )
+    const glob = useParams()["*"]
+    // console.log('glob is: ' + glob)
+
+    const trueglob = (typeof glob === 'string' && daily)
+                   ? 'daily/' + glob
+                   : glob
+
+    const thisPost = (typeof trueglob === 'string')
+                   ? posts.find((x: Post) => trueglob.startsWith(x.permalink))
+                   : undefined
+    // console.log('thisPost is: ' + thisPost)
 
     useEffect(() => {
         if (typeof thisPost !== 'undefined' &&
@@ -35,7 +44,7 @@ export default function BlogPost() {
         if (posts.length === 0) {
             return <div className="section">Just a second...</div>
         } else {
-            return <div className="section">Page doesn't exist, or may be hidden from public view: {slug}</div>
+            return <div className="section">Page doesn't exist, or may be hidden from public view: {trueglob}</div>
         }
     }
 
@@ -56,7 +65,7 @@ export default function BlogPost() {
             if (href) {
                 let linkClass = 'working-link'
                 if (!href.startsWith('http') && !href.startsWith('#')) {
-                    const found = posts.find(x => x.slug === href.split('#')[0])
+                    const found = posts.find(x => href.includes(x.permalink))
                     if (!found) {
                         linkClass = 'broken-link'
                     }
@@ -71,16 +80,16 @@ export default function BlogPost() {
 
     // Track what pages the visitor has seen
     const seen = new Set<string>(JSON.parse(window.localStorage.getItem('seen') ?? '[]'))
-    if (seen.has(thisPost.slug)) {
+    if (seen.has(thisPost.permalink)) {
         const all = posts.filter(post => !post.tags.includes('stub'))
-                         .map(post => post.slug)
+                         .map(post => post.permalink)
         // If visitor has now seen all non-stubs, restart the tracker so
         // the Random button continues working
-        if (!all.find(slug => !seen.has(slug))) {
+        if (!all.find(permalink => !seen.has(permalink))) {
             seen.clear()
         }
     } else {
-        seen.add(thisPost.slug)
+        seen.add(thisPost.permalink)
     }
     window.localStorage.setItem('seen',  JSON.stringify([...seen]))
 
@@ -88,8 +97,12 @@ export default function BlogPost() {
         return Number(ymd.replaceAll('-', ''))
     }
     let isDaily = false
-    let nextDaily
-    let prevDaily
+    let nextDaily: string | undefined
+    let nextDailyPost: any
+    let nextDailyPermalink: string | undefined
+    let prevDaily: string | undefined
+    let prevDailyPost: any
+    let prevDailyPermalink: string | undefined
     // If this is a daily page, insert links to next and previous dailies
     if (thisPost.slug.match(/^\d{4}-\d{2}-\d{2}$/)) {
         isDaily = true
@@ -98,6 +111,10 @@ export default function BlogPost() {
         prevDaily = dailies.find(slug => num(slug) < num(thisPost.slug))
         nextDaily = dailies.reverse() // node and firefox yet to implement toReversed, 2023-04-24
                            .find(slug => num(slug) > num(thisPost.slug))
+        nextDailyPost = nextDaily ? posts.find(x => x.slug === nextDaily) : undefined
+        prevDailyPost = prevDaily ? posts.find(x => x.slug === prevDaily) : undefined
+        nextDailyPermalink = nextDailyPost ? nextDailyPost.permalink : undefined
+        prevDailyPermalink = prevDailyPost ? prevDailyPost.permalink : undefined
     }
 
     const informalUpdated = daysSince(thisPost.updated)
@@ -129,10 +146,10 @@ export default function BlogPost() {
                 {isDaily ? (
                     <div className="columns is-mobile">
                         <div className="column is-narrow">
-                            {prevDaily ? <Link to={prevDaily}>← {prevDaily}</Link> : 'No previous entry'}
+                            {prevDailyPermalink ? <Link to={`${prevDailyPermalink}/${prevDaily}`}>← {prevDaily}</Link> : 'No previous entry'}
                         </div>
                         <div className="column is-narrow">
-                            {nextDaily ? <Link to={nextDaily}>{nextDaily} →</Link> : 'No next entry'}
+                            {nextDailyPermalink ? <Link to={`${nextDailyPermalink}/${nextDaily}`}>{nextDaily} →</Link> : 'No next entry'}
                         </div>
                     </div>
                 ) : ''}

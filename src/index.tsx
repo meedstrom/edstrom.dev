@@ -15,6 +15,7 @@ import { Route,
 export type Post = {
   title: string,
   slug: string,
+  permalink: string,
   content: string,
   wordcount: number,
   tags: string[],
@@ -38,15 +39,17 @@ function CustomRouterProvider () {
     }
     else {
       const seen = new Set<string>(JSON.parse(window.localStorage.getItem('seen') ?? '[]'))
-      let nonStubs = new Set<string>(posts.filter(x => !x.tags.includes('stub'))
-                                          .map(x => x.slug))
+      let nonStubLinks = new Set<string>(posts.filter(x => !x.tags.includes('stub'))
+                                              .map(x => x.permalink))
       // NOTE: set-difference is coming to JS https://github.com/tc39/proposal-set-methods
-      for (const item of seen) {
-        nonStubs.delete(item)
+      for (const link of seen) {
+        nonStubLinks.delete(link)
       }
-      const unseen = [...nonStubs]
-      const randomSlug = unseen[Math.floor(Math.random() * unseen.length)]
-      return redirect(`/posts/${randomSlug}`)
+      const unseen = [...nonStubLinks]
+      const randomPermalink = unseen[Math.floor(Math.random() * unseen.length)]
+      const randomPost = posts.find(x => x.permalink === randomPermalink)
+      const slug = randomPost ? randomPost.slug : ''
+      return redirect(`/posts/${randomPermalink}/${slug}`)
     }
   }
 
@@ -58,8 +61,10 @@ function CustomRouterProvider () {
           <Route path="posts" element={<Tablev8 />} />
           <Route path="login" element={<Login />} />
           <Route path="random" loader={randomPost} />
-          <Route path="now" loader={() => { return redirect('/posts/portal-on-my-mind') }} />
-          <Route path="about" loader={() => { return redirect('/posts/about') }} />
+          <Route path="now" loader={() => { return redirect('/posts/Dc23BV3/portal-on-my-mind') }} />
+          <Route path="blogroll" loader={() => { return redirect('/posts/KX3ILvN/blogroll') }} />
+          <Route path="nexus" loader={() => { return redirect('/posts/XG9e8M8/nexus') }} />
+          <Route path="about" loader={() => { return redirect('/posts/FZTAP-G/about') }} />
           {/* <Route path="news" element={<Changelog>} /> */}
         </Route>
       </>

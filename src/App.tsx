@@ -89,7 +89,7 @@ export function App({posts, setPosts}: any) {
   const seen = JSON.parse(window.localStorage.getItem('seen') ?? '[]')
 
   // Get postKey out of cookie, if it exists
-  // Should only run once per session
+  // Expected to only run once per session
   useEffect(() => {
     if (!postKey && cookies.storedPostKey) {
       getHardcodedWrappingKey()
@@ -109,7 +109,7 @@ export function App({posts, setPosts}: any) {
   }, [cookies.storedPostKey])
 
   // Get the big JSON of public posts
-  // Should only run once per session
+  // Expected to only run once per session
   useEffect(() => {
     if (posts.length === 0) {
       fetch(process.env.PUBLIC_URL + '/posts.json.gz',
@@ -164,9 +164,9 @@ export function App({posts, setPosts}: any) {
       // Yes it's a bit... crude... but I trust my friends not to elevate
       // their access level ;-)  And non-friends lack the other cookie.
       const allowedTags = new Set<string>(
-        (cookies.who === 'therapist') ? ['eyes-friend', 'eyes-partner', 'eyes-therapist']
-        : (cookies.who === 'partner') ? ['eyes-friend', 'eyes-partner']
-        : (cookies.who === 'friend') ? ['eyes-friend']
+        (cookies.who === 'therapist') ? ['eyes_friend', 'eyes_partner', 'eyes_therapist']
+        : (cookies.who === 'partner') ? ['eyes_friend', 'eyes_partner']
+        : (cookies.who === 'friend') ? ['eyes_friend']
         : []
       )
       const subset = privatePosts.filter((post: Post) => post.tags.find(tag => allowedTags.has(tag)))
@@ -191,13 +191,13 @@ export function App({posts, setPosts}: any) {
   }
   
   if (location.pathname === '/') {
-    return <Navigate to='/posts/about' />
+    return <Navigate to='/about' />
   }
   else return (
     <>
       <nav className="navbar" role="navigation" aria-label="main navigation">
         <div className="navbar-brand">
-          <Link className="navbar-item is-link" to="/posts/about"><img id="about-button" src={icon} alt="Go to the About-page" width="24px" /></Link>
+          <Link className="navbar-item is-link" to="/about"><img id="about-button" src={icon} alt="Go to the About-page" width="24px" /></Link>
           <Link className="navbar-item is-link" to="/posts">{`Seen ${seen.length} of ${posts.length}`}</Link>
           <Link className="navbar-item is-link" to="/random">Random</Link>
           <a id="mainNavBtn" onClick={toggleMenu} role="button" className="navbar-burger" aria-label="menu" aria-expanded="false" data-target="mainNav">
@@ -211,9 +211,9 @@ export function App({posts, setPosts}: any) {
           <div className="navbar-start">
           </div>
           <div className="navbar-end">
-            <Link className="navbar-item is-link" onClick={toggleMenu} to="/posts/nexus">Nexus of entry-points</Link>
+            <Link className="navbar-item is-link" onClick={toggleMenu} to="/posts/XG9e8M8/nexus">Nexus of entry-points</Link>
             <Link className="navbar-item is-link" onClick={toggleMenu} to="/posts">Grand List</Link>
-            <Link className="navbar-item is-link" onClick={toggleMenu} to="/posts/blogroll">Blogroll</Link>
+            <Link className="navbar-item is-link" onClick={toggleMenu} to="/posts/KX3ILvN/blogroll">Blogroll</Link>
             <Link className="navbar-item is-link" onClick={toggleMenu} to="/login">Login</Link>
           </div>
         </div>

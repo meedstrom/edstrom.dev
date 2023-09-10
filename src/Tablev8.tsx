@@ -18,7 +18,7 @@ const columns =
       header: 'Note',
       cell: props => (
         <Link className={props.row.original.tags.includes('stub') ? 'stub-link' : 'working-link'}
-              to={props.row.original.slug}>
+              to={`${props.row.original.permalink}/${props.row.original.slug}`}>
           {props.getValue()}
         </Link>
       ),
