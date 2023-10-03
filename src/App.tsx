@@ -211,9 +211,9 @@ export function App({posts, setPosts}: any) {
           <div className="navbar-start">
           </div>
           <div className="navbar-end">
-            <Link className="navbar-item is-link" onClick={toggleMenu} to="/posts/XG9e8M8/nexus">Nexus of entry-points</Link>
+            <Link className="navbar-item is-link" onClick={toggleMenu} to="/nexus">Nexus of entry-points</Link>
             <Link className="navbar-item is-link" onClick={toggleMenu} to="/posts">Grand List</Link>
-            <Link className="navbar-item is-link" onClick={toggleMenu} to="/posts/KX3ILvN/blogroll">Blogroll</Link>
+            <Link className="navbar-item is-link" onClick={toggleMenu} to="/blogroll">Blogroll</Link>
             <Link className="navbar-item is-link" onClick={toggleMenu} to="/login">Login</Link>
           </div>
         </div>

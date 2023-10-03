@@ -19,8 +19,7 @@ export type Post = {
   content: string,
   wordcount: number,
   tags: string[],
-  links: number | null,
-  backlinks: number | null,
+  links: number,
   created: string,
   updated: string,
 }
@@ -57,14 +56,15 @@ function CustomRouterProvider () {
     createRoutesFromElements(
       <>
         <Route path="/" element={<App posts={posts} setPosts={setPosts} />} >
+          {/* <Route path="posts/*" element={<BlogPost />} /> */}
           <Route path="posts/*" element={<BlogPost />} />
           <Route path="posts" element={<BigList />} />
           <Route path="login" element={<Login />} />
           <Route path="random" loader={randomPost} />
-          <Route path="now" loader={() => { return redirect('/posts/Dc23BV3/portal-on-my-mind') }} />
-          <Route path="blogroll" loader={() => { return redirect('/posts/KX3ILvN/blogroll') }} />
-          <Route path="nexus" loader={() => { return redirect('/posts/XG9e8M8/nexus') }} />
-          <Route path="about" loader={() => { return redirect('/posts/FZTAP-G/about') }} />
+          <Route path="now" loader={() => { return redirect('/posts/BJ9N3oY/portal-on-my-mind') }} />
+          <Route path="blogroll" loader={() => { return redirect('/posts/QwnyMIf/blogroll') }} />
+          <Route path="nexus" loader={() => { return redirect('/posts/tq5Q8GX/nexus') }} />
+          <Route path="about" loader={() => { return redirect('/posts/TtEmFMV/about') }} />
           {/* <Route path="news" element={<Changelog>} /> */}
         </Route>
       </>

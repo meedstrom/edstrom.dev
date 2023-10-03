@@ -1,6 +1,6 @@
 /* eslint semi: ["warn", "never"] */
 import React from 'react'
-import { Interweave, Node, } from 'interweave'
+import { Interweave, Node, ALLOWED_TAG_LIST } from 'interweave'
 import { Post } from './index'
 import { useAppContext } from './App'
 import { useEffect, Suspense, } from 'react'
@@ -76,10 +76,13 @@ export default function BlogPost({ daily }: any) {
                 return <Link className={linkClass} to={href}>{children}</Link>
             }
         }
+        /* if (node.tagName.toLowerCase() === 'details') {
+         *     return <details className={node.className ?? ''} open={true}>{children}</details>
+         * } */
     }
 
-    // Track what pages the visitor has seen
-    const seen = new Set<string>(JSON.parse(window.localStorage.getItem('seen') ?? '[]'))
+        // Track what pages the visitor has seen
+        const seen = new Set<string>(JSON.parse(window.localStorage.getItem('seen') ?? '[]'))
     if (seen.has(thisPost.permalink)) {
         const all = posts.filter(post => !post.tags.includes('stub'))
                          .map(post => post.permalink)
@@ -98,10 +101,10 @@ export default function BlogPost({ daily }: any) {
     }
     let isDaily = false
     let nextDaily: string | undefined
-    let nextDailyPost: any
-    let nextDailyPermalink: string | undefined
     let prevDaily: string | undefined
-    let prevDailyPost: any
+    let nextDailyPost: Post | undefined
+    let prevDailyPost: Post | undefined
+    let nextDailyPermalink: string | undefined
     let prevDailyPermalink: string | undefined
     // If this is a daily page, insert links to next and previous dailies
     if (thisPost.slug.match(/^\d{4}-\d{2}-\d{2}$/)) {
@@ -153,8 +156,14 @@ export default function BlogPost({ daily }: any) {
                         </div>
                     </div>
                 ) : ''}
-                <article aria-labelledby="title" className="content">
-                    <Interweave content={thisPost.content} transform={rewriteLinkTags}/>
+                {/* NOTE: It's really time to migrate to Svelte, I'd prefer to
+                    archive this codebase WITH the use of Interweave */}
+                <article aria-labelledby="title" className="content"
+                         dangerouslySetInnerHTML={{__html: thisPost.content}}
+                >
+                    {/* <Interweave content={thisPost.content}
+                        transform={rewriteLinkTags}
+                        /> */}
                 </article>
             </div>
         </Suspense>

@@ -1,1 +1,3 @@
-This is the code behind https://edstrom.dev.
+This was the React.js project underlying my website https://edstrom.dev.
+
+As of 2023-09-28, it's now a Svelte project over at https://github.com/meedstrom/svelte-frontend.

@@ -82,9 +82,9 @@ export default function Login() {
     })
 
     if (username === 'therapist') {
-      navigate('/posts/Q_iJ1gk/for-therapist')
+      navigate('/posts/TSmDwf3/for-therapist')
     } else {
-      navigate('/posts/XG9e8M8/nexus')
+      navigate('/nexus')
     }
 
   }

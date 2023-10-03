@@ -5,10 +5,15 @@ $body-line-height: 1.3;
 // Make "$black" true black because of OLED screens
 // $black: #000;
 
-// @import "%PUBLIC_URL/AnkaCoder-C75-r.ttf"
+// @import url("./AnkaCoder-C75-r.ttf");
 // $family-monospace: "Anka Coder Narrow";
 
 // TODO: let dark be the default and only turn light for ppl who prefer light
+
+
+// $white: #dfbbaa;
+// $white-ter: #ddbbaa;
+// $white-bis: #ccaaa0;
 
 @import "~bulma/bulma.sass";
 @import "~bulma-prefers-dark/bulma-prefers-dark.sass";
@@ -20,34 +25,41 @@ a[href^="https://"]:after {
   content: "↗️";
 }
 
-// minor fix, bc bulma .content doesnt cope well w divs
-.outline-2:first-child,
-.outline-3:first-child,
-.outline-4:first-child,
-.outline-5:first-child,
-.outline-6:first-child {
-  margin-top: $size-5;
-}
-
-// Mozilla has refused to enable :has() for years, and I presume they have a
-// good reason.  But this is a minor aesthetic rule so whatever.a
-.outline-text-2:has(+ .outline-3),
-.outline-text-3:has(+ .outline-4),
-.outline-text-4:has(+ .outline-5),
-.outline-text-5:has(+ .outline-6) {
-  margin-bottom: $size-5;
-}
-
-.outline-6 { border-left-color: #348; }
-.outline-5 { border-left-color: #558; }
-.outline-4 { border-left-color: #769; }
-.outline-3 { border-left-color: #88a; }
-.outline-2 { border-left-color: #99f; }
-
-// .outline-2 {
-//   border-left-width: 3px;
-//   border-left-style: solid;
+// summary {
+//   margin-left: -10px;
+//   margin-top: $size-6;
+//   margin-bottom: $size-6;
 // }
+
+// .outline-2 > summary { font-size: $size-3; }
+// .outline-3 > summary { font-size: $size-4; }
+// .outline-4 > summary { font-size: $size-5; }
+// .outline-5 > summary { font-size: $size-6; }
+// .outline-6 > summary { font-size: $size-7; }
+
+3// details ul {
+//   margin-top: $size-4;
+// }
+
+.easylink {
+  text-decoration: none !important;
+}
+
+
+// // minor fix, bc bulma .content doesnt cope well w divs
+// .outline-2:first-child,
+// .outline-3:first-child,
+// .outline-4:first-child,
+// .outline-5:first-child,
+// .outline-6:first-child {
+//   margin-top: $size-5;
+// }
+
+summary {
+  display: block;
+  margin-top: $size-7;
+  margin-bottom: $size-6;
+}
 
 .outline-2,
 .outline-3,
@@ -59,8 +71,8 @@ a[href^="https://"]:after {
   // padding-bottom: 1px;  // unexplainable magic effect
   padding-bottom: 12px;
   // padding-top: 12px;
-  border-left-width: 3px;
-  border-left-style: solid;
+  // border-left-width: 4px;
+  // border-left-style: solid;
 }
 
 // // The first outline div at a given level
@@ -72,39 +84,41 @@ a[href^="https://"]:after {
 //   margin-top: $size-7;
 // }
 
-// The last outline div at a given level
-.outline-2:last-of-type,
-.outline-3:last-of-type,
-.outline-4:last-of-type,
-.outline-5:last-of-type,
-.outline-6:last-of-type {
-  padding-bottom: 0;
-}
+// // The last outline div at a given level
+// .outline-2:last-of-type,
+// .outline-3:last-of-type,
+// .outline-4:last-of-type,
+// .outline-5:last-of-type,
+// .outline-6:last-of-type {
+//   padding-bottom: 0;
+// }
 
-div+p,
-div+h2,
-div+h3,
-div+h4,
-div+h5,
-div+h6 { margin-top: $size-7; }
+// summary+p,
+// div+p,
+// div+h2,
+// div+h3,
+// div+h4,
+// div+h5,
+// div+h6 {
+//   margin-top: $size-7;
+// }
 
 ul {
   margin-top: $size-7;
   margin-bottom: $size-6;
 }
 
-// TODO: in .logseq divs, destyle headings.
-// Though this wouldn't really be blind-readable compared to just replacing the
-// heading tags for <p> tags.  IDK how the blind would best read lists with deep
-// nesting, and how to explain the nesting thru aria.  2023-05-12: ok, in lieu
-// of proper ul/li elements, we can use role="list" and role="listitem".
-.logseq h2,h3,h4,h5,h6 {
-  font-size: $size-normal;
-  font-weight: $weight-normal;
-  line-height: $body-line-height;
-  margin-bottom: 1rem;
-}
-
+// // TODO: in .logseq divs, destyle headings.
+// // Though this wouldn't really be blind-readable compared to just replacing the
+// // heading tags for <p> tags.  IDK how the blind would best read lists with deep
+// // nesting, and how to explain the nesting thru aria.  2023-05-12: ok, in lieu
+// // of proper ul/li elements, we can use role="list" and role="listitem".
+// .logseq h2,h3,h4,h5,h6 {
+//   font-size: $size-normal;
+//   font-weight: $weight-normal;
+//   line-height: $body-line-height;
+//   margin-bottom: 1rem;
+// }
 
 // Emacs exports src colors according to the color theme I had active, and I
 // always use a dark theme.  So mandate that all src blocks have dark background
@@ -124,6 +138,13 @@ pre.src {
 
 .section a {
   text-decoration: underline;
+}
+
+
+// TODO: just apply these rules if javascript works
+#big-list th {
+  border-style: groove;
+  border-width: 4px;
 }
 
 #big-list th:hover {
